@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,7 +9,11 @@ import '../../core/theme/qurb_theme.dart';
 import '../../core/util/relative_time.dart';
 import '../../core/widgets/id_badge.dart';
 import '../../core/widgets/qurb_bottom_nav.dart';
+import '../../core/widgets/qurb_empty.dart';
+import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../core/widgets/skeleton.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 import 'data/whispers_models.dart';
 import 'data/whispers_providers.dart';
@@ -19,6 +24,7 @@ class WhispersListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final chatsAsync = ref.watch(myChatsProvider);
     final requestsAsync = ref.watch(incomingWhispersProvider);
 
@@ -53,22 +59,28 @@ class WhispersListScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       chatsAsync.when(
-                        loading: () => const Padding(
-                          padding: EdgeInsets.all(40),
-                          child: Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
+                        loading: () => Column(
+                          children: [
+                            for (var i = 0; i < 4; i++)
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 6),
+                                child: SkelRow(
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                          ],
                         ),
-                        error: (e, _) => Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            'تعذّر تحميل الهمسات',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: qurb.danger),
-                          ),
+                        error: (e, _) => QurbError(
+                          title: t.whispers_error_title,
+                          onRetry: () =>
+                              ref.invalidate(myChatsProvider),
                         ),
                         data: (chats) => chats.isEmpty
-                            ? _EmptyChats()
+                            ? QurbEmpty(
+                                icon: QIcon.whisper,
+                                title: t.whispers_empty_title,
+                                subtitle: t.whispers_empty_subtitle,
+                              )
                             : Column(
                                 children: [
                                   for (final c in chats)
@@ -117,6 +129,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final media = MediaQuery.of(context);
     return ClipRect(
       child: BackdropFilter(
@@ -138,7 +151,7 @@ class _Header extends StatelessWidget {
                 QurbIconWidget(QIcon.whisper, size: 20, color: qurb.accent),
                 const SizedBox(width: 8),
                 Text(
-                  'همس',
+                  t.whispers_header,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -160,6 +173,7 @@ class _IncomingRequestsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -168,7 +182,7 @@ class _IncomingRequestsSection extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                'طلبات هَمس',
+                t.whispers_requests_label,
                 style: TextStyle(
                   fontSize: 11,
                   letterSpacing: 1.5,
@@ -216,6 +230,7 @@ class _IncomingRequestCardState extends ConsumerState<_IncomingRequestCard> {
 
   Future<void> _respond(bool accept) async {
     if (_busy) return;
+    HapticFeedback.lightImpact();
     setState(() => _busy = true);
     try {
       final chatId = await ref
@@ -303,7 +318,7 @@ class _IncomingRequestCardState extends ConsumerState<_IncomingRequestCard> {
                       fontSize: 13, fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text('رفض'),
+                  child: Text(AppLocalizations.of(context).whispers_decline),
                 ),
               ),
               const SizedBox(width: 8),
@@ -330,7 +345,7 @@ class _IncomingRequestCardState extends ConsumerState<_IncomingRequestCard> {
                                 Color(0xFFFFFFFF)),
                           ),
                         )
-                      : const Text('قبول'),
+                      : Text(AppLocalizations.of(context).whispers_accept),
                 ),
               ),
             ],
@@ -347,6 +362,7 @@ class _ChatRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final shape = ref.watch(idShapeProvider);
     final time = thread.lastMessageAt ?? thread.createdAt;
     return GestureDetector(
@@ -376,7 +392,8 @@ class _ChatRow extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'همس · #${thread.otherNumericId}',
+                          t.whispers_label_with_id(
+                              thread.otherNumericId.toString()),
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w600,
@@ -399,7 +416,7 @@ class _ChatRow extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          thread.lastMessagePreview ?? 'لا رسائل بعد',
+                          thread.lastMessagePreview ?? t.whispers_no_messages_yet,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -452,43 +469,3 @@ class _ChatRow extends ConsumerWidget {
   }
 }
 
-class _EmptyChats extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final qurb = context.qurb;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-      child: Column(
-        children: [
-          Container(
-            width: 64, height: 64,
-            decoration: BoxDecoration(
-              color: qurb.accentSoft,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: QurbIconWidget(
-                QIcon.whisper, size: 28, color: qurb.accent,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'لا همسات بعد',
-            style: TextStyle(
-              fontSize: 16, fontWeight: FontWeight.w600, color: qurb.text,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'اضغط "همس للناشر" تحت أي منشور لبدء محادثة خاصة.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12, color: qurb.textDim, height: 1.6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

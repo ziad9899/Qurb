@@ -6,6 +6,7 @@ import '../../core/auth/auth_providers.dart';
 import '../../core/theme/id_hues.dart';
 import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Welcome — second state. Reveals the freshly-generated numeric ID inside
 /// a hue-tinted gradient sphere. Matches the "WelcomeGenerated" artboard.
@@ -15,6 +16,7 @@ class WelcomeGeneratedScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final profileAsync = ref.watch(myProfileProvider);
 
     return Scaffold(
@@ -45,7 +47,7 @@ class WelcomeGeneratedScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'تم!',
+                    t.appName,
                     style: TextStyle(
                       fontSize: 11,
                       color: qurb.accent,
@@ -55,7 +57,7 @@ class WelcomeGeneratedScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'هذا أنت الآن.\nاحفظ معرفك.',
+                    t.welcome_generated_title,
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
@@ -66,8 +68,7 @@ class WelcomeGeneratedScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'سيظهر هذا الرقم بجانب كل منشور وتعليق وهمس ترسله. '
-                    'هو هويتك الكاملة في قُرب.',
+                    t.welcome_generated_subtitle,
                     style: TextStyle(
                       fontSize: 14,
                       color: qurb.textDim,
@@ -83,12 +84,12 @@ class WelcomeGeneratedScreen extends ConsumerWidget {
                           child: CircularProgressIndicator(strokeWidth: 2.4),
                         ),
                         error: (_, __) => Text(
-                          'تعذّر جلب معرفك.',
+                          t.common_loadFailed,
                           style: TextStyle(color: qurb.danger),
                         ),
                         data: (p) => p == null
                             ? Text(
-                                'لا يوجد معرف بعد.',
+                                t.common_loadFailed,
                                 style: TextStyle(color: qurb.textDim),
                               )
                             : _IdReveal(numericId: p.numericId),
@@ -114,7 +115,7 @@ class WelcomeGeneratedScreen extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      child: const Text('دخول إلى المجتمع'),
+                      child: Text(t.welcome_generated_cta),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -128,7 +129,7 @@ class WelcomeGeneratedScreen extends ConsumerWidget {
                       foregroundColor: qurb.textDim,
                       textStyle: const TextStyle(fontSize: 13),
                     ),
-                    child: const Text('أعد التوليد'),
+                    child: Text(t.welcome_cta_generate),
                   ),
                   const SizedBox(height: 42),
                 ],
@@ -216,7 +217,7 @@ class _IdReveal extends StatelessWidget {
               QurbIconWidget(QIcon.shield, size: 13, color: qurb.up),
               const SizedBox(width: 6),
               Text(
-                'مجهول · مشفّر · دائم',
+                AppLocalizations.of(context).welcome_generated_subtitle,
                 style: TextStyle(fontSize: 11.5, color: qurb.textDim),
               ),
             ],

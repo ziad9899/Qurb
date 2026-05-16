@@ -5,6 +5,9 @@ import '../../features/explore/explore_screen.dart';
 import '../../features/feed/comments_screen.dart';
 import '../../features/feed/composer_screen.dart';
 import '../../features/feed/feed_screen.dart';
+import '../../features/legal/community_guidelines_screen.dart';
+import '../../features/legal/privacy_policy_screen.dart';
+import '../../features/legal/report_issue_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/settings/blocks_screen.dart';
@@ -100,6 +103,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'blocks',
             name: 'settings-blocks',
             builder: (_, __) => const BlocksScreen(),
+          ),
+          GoRoute(
+            path: 'privacy',
+            name: 'settings-privacy',
+            builder: (_, __) => const PrivacyPolicyScreen(),
+          ),
+          GoRoute(
+            path: 'community',
+            name: 'settings-community',
+            builder: (_, __) => const CommunityGuidelinesScreen(),
+          ),
+          GoRoute(
+            path: 'report',
+            name: 'settings-report',
+            builder: (_, __) => const ReportIssueScreen(),
           ),
         ],
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/auth_providers.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/qurb_theme.dart';
 import '../../../core/util/relative_time.dart';
 import '../../../core/widgets/id_badge.dart';
@@ -8,10 +10,12 @@ import '../../../core/widgets/proximity_chip.dart';
 import '../../../core/widgets/qurb_card.dart';
 import '../../../core/widgets/qurb_icon.dart';
 import '../../../core/widgets/vote_pill.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../profile/data/profile_providers.dart';
 import '../../showcase/design_showcase_screen.dart' show idShapeProvider;
 import '../data/feed_providers.dart';
 import '../data/post.dart';
+import '../edit_post_sheet.dart';
 import '../report_sheet.dart';
 
 class PostCard extends ConsumerStatefulWidget {
@@ -89,6 +93,14 @@ class _PostCardState extends ConsumerState<PostCard> {
 
   void _showMoreMenu(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
+    // Author detection: profile may still be loading on first paint; in that
+    // case fall back to the non-owner menu rather than guess.
+    final myNumericId =
+        ref.read(myProfileProvider).valueOrNull?.numericId;
+    final isOwner = myNumericId != null &&
+        myNumericId == widget.post.authorNumericId;
+
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -105,93 +117,180 @@ class _PostCardState extends ConsumerState<PostCard> {
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: qurb.borderStrong,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _MenuItem(
-                  icon: QIcon.pin,
-                  label: 'حفظ المنشور',
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    await ref
-                        .read(profileRepositoryProvider)
-                        .toggleBookmark(widget.post.id);
-                    ref.invalidate(myBookmarksProvider);
-                  },
-                ),
-                _MenuItem(
-                  icon: QIcon.flag,
-                  label: 'الإبلاغ عن المنشور',
-                  color: qurb.text,
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    await ReportSheet.show(
-                      context,
-                      targetType: 'post',
-                      targetId: widget.post.id,
-                    );
-                  },
-                ),
-                _MenuItem(
-                  icon: QIcon.block,
-                  label: 'حظر الناشر',
-                  color: qurb.danger,
-                  last: true,
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    final ok = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        backgroundColor: qurb.surface,
-                        title: Text(
-                          'حظر #${widget.post.authorNumericId}؟',
-                          style: TextStyle(color: qurb.text),
-                        ),
-                        content: Text(
-                          'لن ترى منشوراته أو تعليقاته بعد الآن.',
-                          style: TextStyle(
-                            color: qurb.textDim, height: 1.6,
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.of(context).pop(false),
-                            child: Text(
-                              'إلغاء',
-                              style: TextStyle(color: qurb.textDim),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.of(context).pop(true),
-                            child: Text(
-                              'حظر',
-                              style: TextStyle(color: qurb.danger),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (ok == true) {
-                      await ref
-                          .read(profileRepositoryProvider)
-                          .blockUserByPost(widget.post.id);
-                      ref.invalidate(feedPostsProvider);
-                      ref.invalidate(myBlocksProvider);
-                    }
-                  },
-                ),
-              ],
+              children: isOwner
+                  ? _ownerMenu(context, ref, t, qurb)
+                  : _viewerMenu(context, ref, t, qurb),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  List<Widget> _grabber(QurbColors qurb) => [
+        Container(
+          width: 40, height: 4,
+          decoration: BoxDecoration(
+            color: qurb.borderStrong,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(height: 14),
+      ];
+
+  List<Widget> _ownerMenu(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    QurbColors qurb,
+  ) =>
+      [
+        ..._grabber(qurb),
+        _MenuItem(
+          icon: QIcon.pin,
+          label: t.post_menu_save,
+          onTap: () async {
+            Navigator.of(context).pop();
+            await ref
+                .read(profileRepositoryProvider)
+                .toggleBookmark(widget.post.id);
+            ref.invalidate(myBookmarksProvider);
+          },
+        ),
+        _MenuItem(
+          icon: QIcon.more,
+          label: t.post_menu_edit,
+          onTap: () async {
+            Navigator.of(context).pop();
+            await EditPostSheet.show(
+              context,
+              postId: widget.post.id,
+              initialBody: widget.post.body,
+            );
+          },
+        ),
+        _MenuItem(
+          icon: QIcon.close,
+          label: t.post_menu_delete,
+          color: qurb.danger,
+          last: true,
+          onTap: () async {
+            Navigator.of(context).pop();
+            final ok = await _confirmDelete(context, t, qurb);
+            if (ok != true) return;
+            try {
+              await ref
+                  .read(postRepositoryProvider)
+                  .deleteMyPost(widget.post.id);
+              ref.invalidate(feedPostsProvider);
+            } catch (_) {/* silent — feed refresh will reflect */}
+          },
+        ),
+      ];
+
+  List<Widget> _viewerMenu(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    QurbColors qurb,
+  ) =>
+      [
+        ..._grabber(qurb),
+        _MenuItem(
+          icon: QIcon.pin,
+          label: t.post_menu_save,
+          onTap: () async {
+            Navigator.of(context).pop();
+            await ref
+                .read(profileRepositoryProvider)
+                .toggleBookmark(widget.post.id);
+            ref.invalidate(myBookmarksProvider);
+          },
+        ),
+        _MenuItem(
+          icon: QIcon.flag,
+          label: t.post_menu_report,
+          color: qurb.text,
+          onTap: () async {
+            Navigator.of(context).pop();
+            await ReportSheet.show(
+              context,
+              targetType: 'post',
+              targetId: widget.post.id,
+            );
+          },
+        ),
+        _MenuItem(
+          icon: QIcon.block,
+          label: t.post_menu_block,
+          color: qurb.danger,
+          last: true,
+          onTap: () async {
+            Navigator.of(context).pop();
+            final ok = await showDialog<bool>(
+              context: context,
+              builder: (_) => AlertDialog(
+                backgroundColor: qurb.surface,
+                title: Text(
+                  t.post_block_title(
+                      widget.post.authorNumericId.toString()),
+                  style: TextStyle(color: qurb.text),
+                ),
+                content: Text(
+                  t.post_block_body,
+                  style: TextStyle(color: qurb.textDim, height: 1.6),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(t.common_cancel,
+                        style: TextStyle(color: qurb.textDim)),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text(t.post_block_action,
+                        style: TextStyle(color: qurb.danger)),
+                  ),
+                ],
+              ),
+            );
+            if (ok == true) {
+              await ref
+                  .read(profileRepositoryProvider)
+                  .blockUserByPost(widget.post.id);
+              ref.invalidate(feedPostsProvider);
+              ref.invalidate(myBlocksProvider);
+            }
+          },
+        ),
+      ];
+
+  Future<bool?> _confirmDelete(
+    BuildContext context,
+    AppLocalizations t,
+    QurbColors qurb,
+  ) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: qurb.surface,
+        title: Text(t.post_delete_title, style: TextStyle(color: qurb.text)),
+        content: Text(
+          t.post_delete_body,
+          style: TextStyle(color: qurb.textDim, height: 1.6),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(t.common_cancel,
+                style: TextStyle(color: qurb.textDim)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(t.post_delete_action,
+                style: TextStyle(color: qurb.danger)),
+          ),
+        ],
       ),
     );
   }

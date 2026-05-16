@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 import '../data/mock_data.dart' show Proximity;
 import '../theme/qurb_theme.dart';
 import 'qurb_icon.dart';
@@ -19,22 +20,23 @@ class ProximityChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     late final String label;
     late final QIcon icon;
     late final Color color;
     switch (kind) {
       case Proximity.near:
-        label = 'قريب منك';
+        label = t.proximity_near;
         icon = QIcon.pin;
         color = qurb.accent;
         break;
       case Proximity.block:
-        label = 'داخل الحي';
+        label = t.proximity_block;
         icon = QIcon.pin;
         color = qurb.gold;
         break;
       case Proximity.city:
-        label = 'داخل المدينة';
+        label = t.proximity_city;
         icon = QIcon.globe;
         color = qurb.textDim;
         break;

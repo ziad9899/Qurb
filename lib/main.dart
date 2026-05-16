@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/auth/secure_session_storage.dart';
 import 'core/config/supabase_config.dart';
+import 'core/prefs/prefs_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +19,8 @@ Future<void> main() async {
     ),
   );
 
+  final prefs = await SharedPreferences.getInstance();
+
   await Supabase.initialize(
     url: SupabaseConfig.url,
     anonKey: SupabaseConfig.anonKey,
@@ -24,9 +28,15 @@ Future<void> main() async {
       localStorage: SecureSessionStorage(),
       autoRefreshToken: true,
     ),
-    // Realtime is wired in Phase 3+
     debug: false,
   );
 
-  runApp(const ProviderScope(child: QurbApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const QurbApp(),
+    ),
+  );
 }

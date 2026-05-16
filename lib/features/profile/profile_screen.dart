@@ -7,9 +7,15 @@ import '../../core/auth/profile.dart';
 import '../../core/theme/id_hues.dart';
 import '../../core/theme/qurb_theme.dart';
 import '../../core/util/relative_time.dart';
+import 'package:intl/intl.dart';
+
 import '../../core/widgets/proximity_chip.dart';
 import '../../core/widgets/qurb_bottom_nav.dart';
+import '../../core/widgets/qurb_empty.dart';
+import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../core/widgets/skeleton.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../feed/data/post.dart';
 import 'data/profile_models.dart';
 import 'data/profile_providers.dart';
@@ -107,6 +113,7 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
       child: Row(
@@ -114,7 +121,7 @@ class _TopBar extends StatelessWidget {
           const SizedBox(width: 36),
           const Spacer(),
           Text(
-            'ملفي',
+            t.profile_header,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -150,6 +157,7 @@ class _Hero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final hue = idHueFor(profile.numericId.toString());
     final accentBright = oklchToColor(0.78, 0.18, hue.h);
     final accentDeep = oklchToColor(0.48, 0.16, hue.h);
@@ -204,7 +212,7 @@ class _Hero extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                'معرفك في قُرب',
+                t.profile_id_caption,
                 style: TextStyle(
                   fontSize: 11,
                   color: qurb.textFaint,
@@ -232,7 +240,7 @@ class _Hero extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'عضو منذ ${_monthLabel(profile.createdAt)}',
+                      t.profile_member_since(_monthLabel(context, profile.createdAt)),
                       style: TextStyle(
                         fontSize: 12, color: qurb.textDim,
                       ),
@@ -247,13 +255,12 @@ class _Hero extends StatelessWidget {
     );
   }
 
-  static const _months = [
-    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-  ];
-
-  static String _monthLabel(DateTime t) =>
-      '${_months[t.month - 1]} ${t.year}';
+  // Uses the current Localizations locale so months render in the user's
+  // chosen language (intl.DateFormat handles both ar/en formatting).
+  static String _monthLabel(BuildContext context, DateTime dt) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return DateFormat.yMMMM(locale).format(dt);
+  }
 }
 
 class _HeroSkeleton extends StatelessWidget {
@@ -284,10 +291,11 @@ class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final items = <(String, String, Color)>[
-      (stats.postsCount.toString(), 'منشور', qurb.text),
-      (stats.karmaShort, 'كارما', qurb.accent),
-      (stats.bookmarksCount.toString(), 'محفوظات', qurb.text),
+      (stats.postsCount.toString(), t.profile_stat_posts, qurb.text),
+      (stats.karmaShort, t.profile_stat_karma, qurb.accent),
+      (stats.bookmarksCount.toString(), t.profile_stat_bookmarks, qurb.text),
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -341,10 +349,11 @@ class _TabsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
-    final labels = const {
-      ProfileTab.posts: 'منشوراتي',
-      ProfileTab.comments: 'تعليقاتي',
-      ProfileTab.bookmarks: 'محفوظاتي',
+    final t = AppLocalizations.of(context);
+    final labels = {
+      ProfileTab.posts: t.profile_tab_posts,
+      ProfileTab.comments: t.profile_tab_comments,
+      ProfileTab.bookmarks: t.profile_tab_bookmarks,
     };
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18),
@@ -391,13 +400,21 @@ class _TabBody extends ConsumerWidget {
   final ProfileTab tab;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     switch (tab) {
       case ProfileTab.posts:
-        return _PostsList(provider: myPostsProvider);
+        return _PostsList(
+          provider: myPostsProvider,
+          emptyIcon: QIcon.compass,
+          emptyTitle: t.profile_empty_posts_title,
+          emptySubtitle: t.profile_empty_posts_subtitle,
+        );
       case ProfileTab.bookmarks:
         return _PostsList(
           provider: myBookmarksProvider,
-          emptyMessage: 'لا محفوظات بعد',
+          emptyIcon: QIcon.pin,
+          emptyTitle: t.profile_empty_bookmarks_title,
+          emptySubtitle: t.profile_empty_bookmarks_subtitle,
         );
       case ProfileTab.comments:
         final async = ref.watch(myCommentsProvider);
@@ -407,37 +424,37 @@ class _TabBody extends ConsumerWidget {
 }
 
 class _PostsList extends ConsumerWidget {
-  const _PostsList({required this.provider, this.emptyMessage});
-  final ProviderListenable<AsyncValue<List<Post>>> provider;
-  final String? emptyMessage;
+  const _PostsList({
+    required this.provider,
+    this.emptyIcon = QIcon.compass,
+    required this.emptyTitle,
+    this.emptySubtitle,
+  });
+  final AutoDisposeFutureProvider<List<Post>> provider;
+  final QIcon emptyIcon;
+  final String emptyTitle;
+  final String? emptySubtitle;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final qurb = context.qurb;
     final async = ref.watch(provider);
     return async.when(
       loading: () => const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      ),
-      error: (_, __) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Center(
-          child: Text(
-            'تعذّر التحميل',
-            style: TextStyle(color: qurb.danger),
-          ),
+        padding: EdgeInsets.fromLTRB(14, 6, 14, 0),
+        child: Column(
+          children: [SkelCard(), SkelCard(), SkelCard()],
         ),
+      ),
+      error: (_, __) => QurbError(
+        compact: true,
+        onRetry: () => ref.invalidate(provider),
       ),
       data: (posts) {
         if (posts.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(36),
-            child: Center(
-              child: Text(
-                emptyMessage ?? 'لا منشورات بعد',
-                style: TextStyle(fontSize: 12, color: qurb.textFaint),
-              ),
-            ),
+          return QurbEmpty(
+            compact: true,
+            icon: emptyIcon,
+            title: emptyTitle,
+            subtitle: emptySubtitle,
           );
         }
         return Padding(
@@ -460,6 +477,7 @@ class _CompactPostRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () => GoRouter.of(context).push('/post/${post.id}'),
       child: Container(
@@ -487,7 +505,7 @@ class _CompactPostRow extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  '${post.score} · ${post.commentsCount} ردود',
+                  t.profile_post_meta(post.score, post.commentsCount),
                   style: TextStyle(
                     fontSize: 10.5,
                     color: qurb.textFaint,
@@ -512,36 +530,31 @@ class _CompactPostRow extends StatelessWidget {
   }
 }
 
-class _CommentsList extends StatelessWidget {
+class _CommentsList extends ConsumerWidget {
   const _CommentsList({required this.async});
   final AsyncValue<List<MyComment>> async;
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
     return async.when(
       loading: () => const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      ),
-      error: (_, __) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Center(
-          child: Text(
-            'تعذّر التحميل',
-            style: TextStyle(color: qurb.danger),
-          ),
+        padding: EdgeInsets.fromLTRB(14, 6, 14, 0),
+        child: Column(
+          children: [SkelCard(), SkelCard(), SkelCard()],
         ),
+      ),
+      error: (_, __) => QurbError(
+        compact: true,
+        onRetry: () => ref.invalidate(myCommentsProvider),
       ),
       data: (list) {
         if (list.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(36),
-            child: Center(
-              child: Text(
-                'لا تعليقات بعد',
-                style: TextStyle(fontSize: 12, color: qurb.textFaint),
-              ),
-            ),
+          final t = AppLocalizations.of(context);
+          return QurbEmpty(
+            compact: true,
+            icon: QIcon.reply,
+            title: t.profile_empty_comments_title,
+            subtitle: t.profile_empty_comments_subtitle,
           );
         }
         return Padding(

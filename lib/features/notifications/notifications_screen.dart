@@ -8,7 +8,11 @@ import '../../core/theme/qurb_theme.dart';
 import '../../core/util/relative_time.dart';
 import '../../core/widgets/id_badge.dart';
 import '../../core/widgets/qurb_bottom_nav.dart';
+import '../../core/widgets/qurb_empty.dart';
+import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../core/widgets/skeleton.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 import 'data/notifications_models.dart';
 import 'data/notifications_providers.dart';
@@ -19,6 +23,7 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final notifsAsync = ref.watch(notificationsListProvider);
 
     return Scaffold(
@@ -45,20 +50,29 @@ class NotificationsScreen extends ConsumerWidget {
                     await ref.read(notificationsListProvider.future);
                   },
                   child: notifsAsync.when(
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                    loading: () => const SkelList(
+                      count: 6,
+                      padding: EdgeInsets.fromLTRB(14, 12, 14, 100),
                     ),
-                    error: (e, _) => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          'تعذّر تحميل الإشعارات',
-                          style: TextStyle(color: qurb.danger),
-                        ),
-                      ),
+                    error: (e, _) => QurbError(
+                      title: t.notifs_error_title,
+                      onRetry: () =>
+                          ref.invalidate(notificationsListProvider),
                     ),
                     data: (notifs) {
-                      if (notifs.isEmpty) return _Empty();
+                      if (notifs.isEmpty) {
+                        return ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 60),
+                            QurbEmpty(
+                              icon: QIcon.bell,
+                              title: t.notifs_empty_title,
+                              subtitle: t.notifs_empty_subtitle,
+                            ),
+                          ],
+                        );
+                      }
                       return _GroupedList(notifs: notifs);
                     },
                   ),
@@ -103,6 +117,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final media = MediaQuery.of(context);
     return ClipRect(
       child: BackdropFilter(
@@ -120,7 +135,7 @@ class _Header extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                'الإشعارات',
+                t.notifs_title,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
@@ -132,7 +147,7 @@ class _Header extends StatelessWidget {
               GestureDetector(
                 onTap: onMarkAll,
                 child: Text(
-                  'علِّم الكل كمقروء',
+                  t.notifs_mark_all_read,
                   style: TextStyle(
                     fontSize: 12,
                     color: qurb.accent,
@@ -153,6 +168,7 @@ class _GroupedList extends ConsumerWidget {
   final List<NotificationItem> notifs;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     // Group preserving the (already-descending) chronological order.
     final groups = <NotificationBucket, List<NotificationItem>>{};
     for (final n in notifs) {
@@ -163,7 +179,7 @@ class _GroupedList extends ConsumerWidget {
       padding: const EdgeInsets.only(top: 4, bottom: 100),
       children: [
         for (final entry in groups.entries) ...[
-          _GroupHeader(label: bucketLabel(entry.key)),
+          _GroupHeader(label: bucketLabel(entry.key, t)),
           for (final n in entry.value)
             _NotifRow(notif: n, onTap: () => _onTapNotif(context, ref, n)),
         ],
@@ -277,7 +293,7 @@ class _NotifRow extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _humanize(notif),
+                    _humanize(context, notif),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -315,69 +331,24 @@ class _NotifRow extends ConsumerWidget {
     }
   }
 
-  String _humanize(NotificationItem n) {
+  String _humanize(BuildContext context, NotificationItem n) {
+    final t = AppLocalizations.of(context);
     switch (n.kind) {
       case NotificationKind.reply:
-        return 'ردّ على منشورك: "${n.body}"';
+        return t.notifs_human_reply_to_post(n.body);
       case NotificationKind.replyToComment:
-        return 'ردّ على تعليقك: "${n.body}"';
+        return t.notifs_human_reply_to_comment(n.body);
       case NotificationKind.voteMilestone:
-        return 'صوّت لمنشورك ${n.body.isEmpty ? '+1' : n.body}';
+        return t.notifs_human_vote_milestone(n.body.isEmpty ? '+1' : n.body);
       case NotificationKind.whisperRequest:
-        return n.body.isEmpty ? 'بدأ همساً معك' : n.body;
+        return n.body.isEmpty
+            ? t.notifs_human_whisper_request_default
+            : n.body;
       case NotificationKind.pulse:
         return n.body;
       case NotificationKind.tagTrending:
-        return 'وسم #${n.body} وصل لذروة جديدة';
+        return t.notifs_human_tag_trending(n.body);
     }
   }
 }
 
-class _Empty extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final qurb = context.qurb;
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        const SizedBox(height: 80),
-        Center(
-          child: Column(
-            children: [
-              Container(
-                width: 64, height: 64,
-                decoration: BoxDecoration(
-                  color: qurb.accentSoft, shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: QurbIconWidget(
-                    QIcon.bell, size: 28, color: qurb.accent,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'لا إشعارات بعد',
-                style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w600,
-                  color: qurb.text,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Text(
-                  'الردود والهمسات وتفاعلات منشوراتك ستظهر هنا.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12, color: qurb.textDim, height: 1.6,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}

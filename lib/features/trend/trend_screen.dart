@@ -4,7 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/qurb_bottom_nav.dart';
+import '../../core/widgets/qurb_empty.dart';
+import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../core/widgets/skeleton.dart';
+import '../../l10n/generated/app_localizations.dart';
 import 'data/trend_models.dart';
 import 'data/trend_providers.dart';
 import 'widgets/pulse_map.dart';
@@ -15,6 +19,7 @@ class TrendScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final tagsAsync = ref.watch(trendingTagsProvider);
     final media = MediaQuery.of(context);
 
@@ -35,7 +40,7 @@ class TrendScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'الترند المحلي',
+                          t.trend_title,
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w700,
@@ -45,7 +50,7 @@ class TrendScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'ما يتحدث عنه الناس قريباً منك',
+                          t.trend_subtitle,
                           style: TextStyle(
                             fontSize: 12, color: qurb.textDim,
                           ),
@@ -73,7 +78,7 @@ class TrendScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'مباشر',
+                            t.trend_live,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -107,7 +112,7 @@ class TrendScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'أكثر النقاشات حرارة',
+                            t.trend_hottest,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -118,28 +123,27 @@ class TrendScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 10),
                       tagsAsync.when(
-                        loading: () => const Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
+                        loading: () => const Column(
+                          children: [
+                            SkelRow(padding: EdgeInsets.only(bottom: 8)),
+                            SkelRow(padding: EdgeInsets.only(bottom: 8)),
+                            SkelRow(padding: EdgeInsets.only(bottom: 8)),
+                            SkelRow(padding: EdgeInsets.only(bottom: 8)),
+                          ],
                         ),
-                        error: (_, __) => Text(
-                          'تعذّر تحميل الترند',
-                          style: TextStyle(color: qurb.danger),
+                        error: (_, __) => QurbError(
+                          compact: true,
+                          title: t.trend_error_title,
+                          onRetry: () =>
+                              ref.invalidate(trendingTagsProvider),
                         ),
                         data: (tags) {
                           if (tags.isEmpty) {
-                            return Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: Center(
-                                child: Text(
-                                  'لا نشاط ملحوظ في الساعة الأخيرة',
-                                  style: TextStyle(
-                                    fontSize: 12, color: qurb.textFaint,
-                                  ),
-                                ),
-                              ),
+                            return QurbEmpty(
+                              compact: true,
+                              icon: QIcon.flame,
+                              title: t.trend_empty_title,
+                              subtitle: t.trend_empty_subtitle,
                             );
                           }
                           return Column(
@@ -241,7 +245,8 @@ class _TrendRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  '${tag.recentCount} منشور · آخر 30 دقيقة',
+                  AppLocalizations.of(context)
+                      .trend_row_subtitle(tag.recentCount),
                   style: TextStyle(
                     fontSize: 11,
                     color: qurb.textFaint,

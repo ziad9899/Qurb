@@ -9,15 +9,23 @@ import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/id_badge.dart';
 import '../../core/widgets/proximity_chip.dart';
 import '../../core/widgets/qurb_bottom_nav.dart';
+import '../../core/widgets/qurb_empty.dart';
+import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../core/widgets/skeleton.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../feed/data/post.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 import 'data/explore_models.dart';
 import 'data/explore_providers.dart';
 
-const _kRecentSearches = [
-  'كافيهات الفجر', '#حكايات', 'مفقودات', 'إيجار', 'فعاليات السبت',
-];
+List<String> _recentSearches(AppLocalizations t) => [
+      t.explore_recent_q1,
+      t.explore_recent_q2,
+      t.explore_recent_q3,
+      t.explore_recent_q4,
+      t.explore_recent_q5,
+    ];
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -55,6 +63,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final isSearching = _liveQuery.isNotEmpty;
     final media = MediaQuery.of(context);
 
@@ -72,7 +81,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'استكشف',
+                      t.explore_title,
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
@@ -103,8 +112,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                 fontSize: 13.5, color: qurb.text,
                               ),
                               decoration: InputDecoration(
-                                hintText:
-                                    'ابحث عن مجتمعات، وسوم، منشورات...',
+                                hintText: t.explore_hint,
                                 hintStyle: TextStyle(
                                   fontSize: 13.5, color: qurb.textFaint,
                                 ),
@@ -175,6 +183,7 @@ class _BrowseBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final communitiesAsync = ref.watch(communitiesProvider);
     final suggestedAsync = ref.watch(suggestedPostsProvider);
     return ListView(
@@ -184,7 +193,7 @@ class _BrowseBody extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
           child: Text(
-            'آخر البحث',
+            t.explore_recent,
             style: TextStyle(
               fontSize: 11,
               color: qurb.textFaint,
@@ -199,7 +208,7 @@ class _BrowseBody extends ConsumerWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              for (final s in _kRecentSearches)
+              for (final s in _recentSearches(t))
                 GestureDetector(
                   onTap: () => onChipTap(s),
                   child: Container(
@@ -230,7 +239,7 @@ class _BrowseBody extends ConsumerWidget {
           child: Row(
             children: [
               Text(
-                'المجتمعات',
+                t.explore_communities,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -239,7 +248,7 @@ class _BrowseBody extends ConsumerWidget {
               ),
               const Spacer(),
               Text(
-                'عرض الكل',
+                t.explore_view_all,
                 style: TextStyle(
                   fontSize: 11,
                   color: qurb.accent,
@@ -250,18 +259,42 @@ class _BrowseBody extends ConsumerWidget {
           ),
         ),
         communitiesAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.all(24),
-            child: Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
+          loading: () => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.25,
+              ),
+              itemCount: 4,
+              itemBuilder: (_, __) => Container(
+                decoration: BoxDecoration(
+                  color: qurb.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: qurb.border, width: 0.5),
+                ),
+                padding: const EdgeInsets.all(14),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Skel(width: 36, height: 36, radius: 10),
+                    SizedBox(height: 10),
+                    Skel(width: 90, height: 12),
+                    SizedBox(height: 6),
+                    Skel(width: 60, height: 10),
+                  ],
+                ),
+              ),
             ),
           ),
-          error: (_, __) => Padding(
-            padding: const EdgeInsets.all(18),
-            child: Text(
-              'تعذّر تحميل المجتمعات',
-              style: TextStyle(color: qurb.danger, fontSize: 12),
-            ),
+          error: (_, __) => QurbError(
+            compact: true,
+            title: t.explore_communities_error_title,
+            onRetry: () => ref.invalidate(communitiesProvider),
           ),
           data: (list) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -283,7 +316,7 @@ class _BrowseBody extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
           child: Text(
-            'مقترح لك',
+            t.explore_suggested,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -359,7 +392,8 @@ class _CommunityCard extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            '${_arabicNumber(c.members)} عضو',
+            AppLocalizations.of(context)
+                .explore_members_count(_arabicNumber(c.members)),
             style: TextStyle(
               fontSize: 10.5,
               color: qurb.textDim,
@@ -374,7 +408,7 @@ class _CommunityCard extends StatelessWidget {
   String _arabicNumber(int n) {
     if (n >= 1000) {
       final k = (n / 1000).toStringAsFixed(1);
-      return '$kك';
+      return '${k}k';
     }
     return n.toString();
   }
@@ -435,37 +469,23 @@ class _SearchResults extends ConsumerWidget {
   final String query;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final qurb = context.qurb;
     final resultsAsync = ref.watch(searchResultsProvider);
+    final t = AppLocalizations.of(context);
     return resultsAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
+      loading: () => const SkelList(
+        count: 4,
+        padding: EdgeInsets.fromLTRB(18, 6, 18, 110),
       ),
-      error: (_, __) => Center(
-        child: Text(
-          'تعذّر البحث',
-          style: TextStyle(color: qurb.danger),
-        ),
+      error: (_, __) => QurbError(
+        title: t.explore_search_error_title,
+        onRetry: () => ref.invalidate(searchResultsProvider),
       ),
       data: (posts) {
         if (posts.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(30),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  QurbIconWidget(
-                    QIcon.search, size: 32, color: qurb.textFaint,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'لا نتائج لـ "$query"',
-                    style: TextStyle(fontSize: 14, color: qurb.textDim),
-                  ),
-                ],
-              ),
-            ),
+          return QurbEmpty(
+            icon: QIcon.search,
+            title: t.explore_search_empty_title(query),
+            subtitle: t.explore_search_empty_subtitle,
           );
         }
         return ListView.builder(

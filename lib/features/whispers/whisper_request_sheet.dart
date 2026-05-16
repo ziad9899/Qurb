@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/id_badge.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 import 'data/whispers_providers.dart';
 
@@ -62,6 +64,7 @@ class _WhisperRequestSheetState extends ConsumerState<WhisperRequestSheet> {
 
   Future<void> _submit() async {
     if (_busy) return;
+    HapticFeedback.lightImpact();
     setState(() {
       _busy = true;
       _error = null;
@@ -73,7 +76,18 @@ class _WhisperRequestSheetState extends ConsumerState<WhisperRequestSheet> {
                 ? null
                 : _controller.text.trim(),
           );
-      if (mounted) Navigator.of(context).pop();
+      HapticFeedback.mediumImpact();
+      if (mounted) {
+        final messenger = ScaffoldMessenger.of(context);
+        final toast = AppLocalizations.of(context).whisper_sent_toast;
+        Navigator.of(context).pop();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(toast),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
       final msg = e.toString();
       // Server sends "chat_exists:<id>" — jump straight to it.
@@ -92,21 +106,19 @@ class _WhisperRequestSheetState extends ConsumerState<WhisperRequestSheet> {
   }
 
   String _humanizeError(String s) {
-    if (s.contains('declined_cooldown')) {
-      return 'الناشر رفض طلباً سابقاً — حاول بعد 30 يومًا.';
-    }
+    final t = AppLocalizations.of(context);
+    if (s.contains('declined_cooldown')) return t.whisper_err_cooldown;
     if (s.contains('rate_limit_whisper_requests_per_hour')) {
-      return 'وصلت لحدّ طلبات الهمس (3/ساعة).';
+      return t.whisper_err_rateLimit;
     }
-    if (s.contains('cannot_whisper_self')) {
-      return 'لا يمكنك إرسال همس لنفسك.';
-    }
-    return 'تعذّر إرسال الطلب.';
+    if (s.contains('cannot_whisper_self')) return t.whisper_err_self;
+    return t.whisper_err_generic;
   }
 
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final shape = ref.watch(idShapeProvider);
     return Container(
       decoration: BoxDecoration(
@@ -114,11 +126,7 @@ class _WhisperRequestSheetState extends ConsumerState<WhisperRequestSheet> {
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(24),
         ),
-        border: Border(
-          top: BorderSide(color: qurb.borderStrong, width: 0.5),
-          left: BorderSide(color: qurb.border, width: 0.5),
-          right: BorderSide(color: qurb.border, width: 0.5),
-        ),
+        border: Border.all(color: qurb.border, width: 0.5),
       ),
       child: SafeArea(
         top: false,
@@ -144,7 +152,7 @@ class _WhisperRequestSheetState extends ConsumerState<WhisperRequestSheet> {
                   QurbIconWidget(QIcon.whisper, size: 18, color: qurb.accent),
                   const SizedBox(width: 8),
                   Text(
-                    'همس للناشر',
+                    t.whisper_request_title,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -160,7 +168,7 @@ class _WhisperRequestSheetState extends ConsumerState<WhisperRequestSheet> {
               ),
               const SizedBox(height: 8),
               Text(
-                'سيستلم الناشر طلب همس. لن تستطيع إرسال رسائل قبل أن يقبل.',
+                t.whisper_request_subtitle,
                 style: TextStyle(
                   fontSize: 12, color: qurb.textDim, height: 1.6,
                 ),
@@ -200,7 +208,7 @@ class _WhisperRequestSheetState extends ConsumerState<WhisperRequestSheet> {
                     fontSize: 14, color: qurb.text, height: 1.6,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'رسالة قصيرة (اختياري)',
+                    hintText: t.whisper_request_hint,
                     hintStyle: TextStyle(
                       fontSize: 14, color: qurb.textFaint,
                     ),
@@ -234,7 +242,7 @@ class _WhisperRequestSheetState extends ConsumerState<WhisperRequestSheet> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text('إلغاء'),
+                      child: Text(t.common_cancel),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -260,7 +268,7 @@ class _WhisperRequestSheetState extends ConsumerState<WhisperRequestSheet> {
                                 ),
                               ),
                             )
-                          : const Text('إرسال طلب'),
+                          : Text(t.whisper_request_submit),
                     ),
                   ),
                 ],

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/qurb_theme.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Welcome — first run, no session yet. Tap "أنشئ معرفي" to call
 /// signInAnonymously(), then route to /welcome/generated for the reveal.
@@ -44,7 +45,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       context.goNamed('welcome-generated');
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'تعذّر التوليد، حاول مجدداً.');
+      setState(() => _error = AppLocalizations.of(context).compose_err_generic);
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -53,6 +54,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: qurb.bg,
@@ -83,7 +85,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'أهلاً بك في قُرب',
+                    t.appName,
                     style: TextStyle(
                       fontSize: 11,
                       color: qurb.accent,
@@ -93,7 +95,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'مجتمع حولك\nبدون اسم، بدون صورة.',
+                    t.welcome_title,
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
@@ -104,8 +106,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'نولّد لك معرفاً رقمياً واحداً يلازمك. لا بريد، لا رقم هاتف، '
-                    'لا متابعون. فقط ما تشاركه مع من حولك.',
+                    t.welcome_subtitle,
                     style: TextStyle(
                       fontSize: 14,
                       color: qurb.textDim,
@@ -114,7 +115,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   ),
                   Expanded(
                     child: Center(
-                      child: _placeholderDial(qurb),
+                      child: _placeholderDial(qurb, t),
                     ),
                   ),
                   if (_error != null) ...[
@@ -125,9 +126,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                     ),
                     const SizedBox(height: 10),
                   ],
-                  _primaryButton(qurb),
+                  _primaryButton(qurb, t),
                   const SizedBox(height: 14),
-                  _termsLine(qurb),
+                  _termsLine(qurb, t),
                   const SizedBox(height: 50),
                 ],
               ),
@@ -138,11 +139,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     );
   }
 
-  Widget _placeholderDial(QurbColors qurb) {
+  Widget _placeholderDial(QurbColors qurb, AppLocalizations t) {
     return AnimatedBuilder(
       animation: _pingC,
       builder: (_, __) {
-        final t = _pingC.value;
+        final v = _pingC.value;
         return SizedBox(
           width: 200,
           height: 200,
@@ -151,14 +152,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
             children: [
               // ping ring
               Transform.scale(
-                scale: 1 + 0.4 * t,
+                scale: 1 + 0.4 * v,
                 child: Container(
                   width: 152,
                   height: 152,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: qurb.accent.withValues(alpha: 0.25 * (1 - t)),
+                      color: qurb.accent.withValues(alpha: 0.25 * (1 - v)),
                     ),
                   ),
                 ),
@@ -188,7 +189,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
               Positioned(
                 bottom: 0,
                 child: Text(
-                  'معرفك سيظهر مرة واحدة فقط',
+                  t.welcome_generated_subtitle,
                   style: TextStyle(fontSize: 13, color: qurb.textDim),
                 ),
               ),
@@ -199,7 +200,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     );
   }
 
-  Widget _primaryButton(QurbColors qurb) {
+  Widget _primaryButton(QurbColors qurb, AppLocalizations t) {
     return SizedBox(
       height: 56,
       child: ElevatedButton(
@@ -229,12 +230,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                       AlwaysStoppedAnimation<Color>(Color(0xFFFFFFFF)),
                 ),
               )
-            : const Text('أنشئ معرفي'),
+            : Text(t.welcome_cta_generate),
       ),
     );
   }
 
-  Widget _termsLine(QurbColors qurb) {
+  Widget _termsLine(QurbColors qurb, AppLocalizations t) {
     return Text.rich(
       TextSpan(
         style: TextStyle(
@@ -243,22 +244,23 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
           height: 1.6,
         ),
         children: [
-          const TextSpan(text: 'بمتابعتك توافق على '),
+          TextSpan(text: t.welcome_terms_prefix),
           TextSpan(
-            text: 'شروط الاستخدام',
+            text: t.welcome_terms_link,
             style: TextStyle(
               color: qurb.textDim,
               decoration: TextDecoration.underline,
             ),
           ),
-          const TextSpan(text: ' و'),
+          TextSpan(text: t.welcome_terms_and),
           TextSpan(
-            text: 'الخصوصية',
+            text: t.welcome_privacy_link,
             style: TextStyle(
               color: qurb.textDim,
               decoration: TextDecoration.underline,
             ),
           ),
+          TextSpan(text: t.welcome_terms_suffix),
         ],
       ),
       textAlign: TextAlign.center,

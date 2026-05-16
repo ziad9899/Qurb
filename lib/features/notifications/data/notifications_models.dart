@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
+
 enum NotificationKind {
   reply,
   replyToComment,
@@ -85,15 +87,15 @@ NotificationBucket bucketOf(DateTime t) {
   return NotificationBucket.earlier;
 }
 
-String bucketLabel(NotificationBucket b) {
+String bucketLabel(NotificationBucket b, AppLocalizations t) {
   switch (b) {
     case NotificationBucket.today:
-      return 'اليوم';
+      return t.notifs_bucket_today;
     case NotificationBucket.yesterday:
-      return 'الأمس';
+      return t.notifs_bucket_yesterday;
     case NotificationBucket.thisWeek:
-      return 'هذا الأسبوع';
+      return t.notifs_bucket_thisWeek;
     case NotificationBucket.earlier:
-      return 'سابقاً';
+      return t.notifs_bucket_earlier;
   }
 }

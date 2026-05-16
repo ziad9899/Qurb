@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/data/mock_data.dart';
+import '../../core/prefs/prefs_providers.dart';
 import '../../core/theme/qurb_theme.dart';
 import '../../core/util/relative_time.dart';
 import '../../core/widgets/id_badge.dart';
@@ -11,11 +12,6 @@ import '../../core/widgets/qurb_card.dart';
 import '../../core/widgets/qurb_icon.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/vote_pill.dart';
-
-/// Theme mode controller — wired to the AppBar toggle so we can switch
-/// dark/light at runtime, matching the Tweaks panel from the web design.
-final themeModeProvider =
-    StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
 /// ID-badge shape controller — picks the visual treatment from Tweaks.
 final idShapeProvider =
@@ -28,7 +24,7 @@ class DesignShowcaseScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
     final shape = ref.watch(idShapeProvider);
-    final mode = ref.watch(themeModeProvider);
+    final mode = ref.watch(appThemeModeProvider);
 
     return Scaffold(
       backgroundColor: qurb.bg,
@@ -43,10 +39,11 @@ class DesignShowcaseScreen extends ConsumerWidget {
                 children: [
                   _BrandHeader(
                     mode: mode,
-                    onToggleMode: () => ref.read(themeModeProvider.notifier).state =
-                        mode == ThemeMode.dark
+                    onToggleMode: () => ref
+                        .read(appThemeModeProvider.notifier)
+                        .setMode(mode == ThemeMode.dark
                             ? ThemeMode.light
-                            : ThemeMode.dark,
+                            : ThemeMode.dark),
                   ),
                   const SizedBox(height: 22),
                   const _Section(title: 'الألوان', child: _Palette()),

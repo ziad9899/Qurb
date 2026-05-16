@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_providers.dart';
 import '../../core/theme/qurb_theme.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Splash — matches the web ScreenSplash artboard.
 ///   • Aurora: accent radial top + gold radial bottom-right
@@ -55,6 +56,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
 
     // Re-check after min time elapses + on each auth state event.
     ref.listen(authStateStreamProvider, (_, __) => _maybeRoute(context));
@@ -126,7 +128,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                       ),
                     ),
                     Text(
-                      'قُرب',
+                      t.appName,
                       style: TextStyle(
                         fontSize: 76,
                         fontWeight: FontWeight.w700,
@@ -139,7 +141,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'مجتمعك . بدون اسم',
+                  t.splash_tagline,
                   style: TextStyle(
                     fontSize: 13,
                     color: qurb.textDim,

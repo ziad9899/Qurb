@@ -2,13 +2,18 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/qurb_theme.dart';
 import '../../core/util/relative_time.dart';
 import '../../core/widgets/id_badge.dart';
+import '../../core/widgets/qurb_empty.dart';
+import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../core/widgets/skeleton.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 import 'data/whispers_models.dart';
 import 'data/whispers_providers.dart';
@@ -87,6 +92,7 @@ class _WhisperThreadScreenState
   Future<void> _send() async {
     final body = _composer.text.trim();
     if (body.isEmpty || _sending) return;
+    HapticFeedback.lightImpact();
     setState(() => _sending = true);
     final repo = ref.read(whispersRepositoryProvider);
     final ph = ChatMessage(
@@ -119,9 +125,21 @@ class _WhisperThreadScreenState
           );
         }
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _liveAdded.removeWhere((m) => m.id == ph.id));
+      HapticFeedback.heavyImpact();
+      final t = AppLocalizations.of(context);
+      final msg = e.toString();
+      String reason = t.thread_err_generic;
+      if (msg.contains('moderation_violation')) {
+        reason = t.thread_err_moderation;
+      } else if (msg.contains('rate_limit_messages_per_minute')) {
+        reason = t.thread_err_rateLimit;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(reason), duration: const Duration(seconds: 3)),
+      );
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -161,22 +179,22 @@ class _WhisperThreadScreenState
               ),
               Expanded(
                 child: initial.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  error: (e, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'تعذّر تحميل الرسائل',
-                        style: TextStyle(color: qurb.danger),
-                      ),
+                  loading: () => const SkelList(count: 4),
+                  error: (e, _) => QurbError(
+                    title: AppLocalizations.of(context).thread_error_title,
+                    onRetry: () => ref.invalidate(
+                      chatMessagesInitialProvider(widget.chatId),
                     ),
                   ),
                   data: (initialMessages) {
                     final merged = _merge(initialMessages);
                     if (merged.isEmpty) {
-                      return _EmptyThread();
+                      final t = AppLocalizations.of(context);
+                      return QurbEmpty(
+                        icon: QIcon.whisper,
+                        title: t.thread_empty_title,
+                        subtitle: t.thread_empty_subtitle,
+                      );
                     }
                     return ListView.builder(
                       controller: _scrollC,
@@ -259,7 +277,10 @@ class _ThreadHeader extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  numericId != null ? 'همس · #$numericId' : 'همس',
+                  numericId != null
+                      ? AppLocalizations.of(context)
+                          .whispers_label_with_id(numericId.toString())
+                      : AppLocalizations.of(context).thread_header_fallback,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -278,7 +299,7 @@ class _ThreadHeader extends StatelessWidget {
   }
 }
 
-class _MessageBubble extends StatelessWidget {
+class _MessageBubble extends StatefulWidget {
   const _MessageBubble({
     required this.message,
     required this.showTimestamp,
@@ -286,11 +307,67 @@ class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool showTimestamp;
   @override
+  State<_MessageBubble> createState() => _MessageBubbleState();
+}
+
+class _MessageBubbleState extends State<_MessageBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    )..forward();
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeOutCubic));
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final message = widget.message;
+    final showTimestamp = widget.showTimestamp;
     final isMine = message.isMine;
     final color = isMine ? qurb.accent : qurb.surface;
     final textColor = isMine ? const Color(0xFFFFFFFF) : qurb.text;
+    return FadeTransition(
+      opacity: _c,
+      child: SlideTransition(
+        position: _slide,
+        child: _bubble(
+          context,
+          showTimestamp: showTimestamp,
+          isMine: isMine,
+          color: color,
+          textColor: textColor,
+          message: message,
+          qurb: qurb,
+        ),
+      ),
+    );
+  }
+
+  Widget _bubble(
+    BuildContext context, {
+    required bool showTimestamp,
+    required bool isMine,
+    required Color color,
+    required Color textColor,
+    required ChatMessage message,
+    required dynamic qurb,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -396,7 +473,7 @@ class _ComposeBar extends StatelessWidget {
                       fontSize: 14, color: qurb.text, height: 1.5,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'اكتب همسك...',
+                      hintText: AppLocalizations.of(context).thread_hint,
                       hintStyle: TextStyle(
                         fontSize: 14, color: qurb.textFaint,
                       ),
@@ -453,27 +530,3 @@ class _ComposeBar extends StatelessWidget {
   }
 }
 
-class _EmptyThread extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final qurb = context.qurb;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            QurbIconWidget(QIcon.whisper, size: 32, color: qurb.textFaint),
-            const SizedBox(height: 12),
-            Text(
-              'ابدأ بالكلمة الأولى',
-              style: TextStyle(
-                fontSize: 14, color: qurb.textDim,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

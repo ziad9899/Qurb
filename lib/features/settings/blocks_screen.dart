@@ -3,7 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/id_badge.dart';
+import '../../core/widgets/qurb_empty.dart';
+import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../core/widgets/skeleton.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../profile/data/profile_providers.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 
@@ -13,6 +17,7 @@ class BlocksScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final media = MediaQuery.of(context);
     final shape = ref.watch(idShapeProvider);
     final blocksAsync = ref.watch(myBlocksProvider);
@@ -41,7 +46,7 @@ class BlocksScreen extends ConsumerWidget {
                 ),
                 const Spacer(),
                 Text(
-                  'قائمة الحظر',
+                  t.blocks_header,
                   style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.w600,
                     color: qurb.text,
@@ -54,58 +59,16 @@ class BlocksScreen extends ConsumerWidget {
           ),
           Expanded(
             child: blocksAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              error: (_, __) => Center(
-                child: Text(
-                  'تعذّر التحميل',
-                  style: TextStyle(color: qurb.danger),
-                ),
+              loading: () => const SkelList(count: 3),
+              error: (_, __) => QurbError(
+                onRetry: () => ref.invalidate(myBlocksProvider),
               ),
               data: (list) {
                 if (list.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(30),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 64, height: 64,
-                            decoration: BoxDecoration(
-                              color: qurb.surface,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: qurb.border, width: 0.5,
-                              ),
-                            ),
-                            child: Center(
-                              child: QurbIconWidget(
-                                QIcon.block, size: 28, color: qurb.textFaint,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            'لا أحد محظور',
-                            style: TextStyle(
-                              fontSize: 14, color: qurb.textDim,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'يمكنك حظر أي مستخدم من قائمة منشوره.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: qurb.textFaint,
-                              height: 1.6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  return QurbEmpty(
+                    icon: QIcon.block,
+                    title: t.blocks_empty_title,
+                    subtitle: t.blocks_empty_subtitle,
                   );
                 }
                 return ListView(
@@ -142,8 +105,8 @@ class BlocksScreen extends ConsumerWidget {
                                   horizontal: 12, vertical: 6,
                                 ),
                               ),
-                              child: const Text(
-                                'إلغاء الحظر',
+                              child: Text(
+                                t.blocks_unblock,
                                 style: TextStyle(
                                   fontSize: 12, fontWeight: FontWeight.w600,
                                 ),

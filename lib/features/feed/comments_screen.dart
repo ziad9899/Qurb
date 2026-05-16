@@ -1,19 +1,30 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/auth/auth_providers.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/qurb_theme.dart';
 import '../../core/util/relative_time.dart';
 import '../../core/widgets/id_badge.dart';
 import '../../core/widgets/proximity_chip.dart';
+import '../../core/widgets/qurb_empty.dart';
+import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/vote_pill.dart';
+import '../../l10n/generated/app_localizations.dart';
+import '../profile/data/profile_providers.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 import '../whispers/whisper_request_sheet.dart';
 import 'data/feed_providers.dart';
 import 'data/post.dart';
 import 'data/post_comment.dart';
+import 'edit_post_sheet.dart';
+import 'report_sheet.dart';
 
 class CommentsScreen extends ConsumerStatefulWidget {
   const CommentsScreen({super.key, required this.postId});
@@ -25,9 +36,27 @@ class CommentsScreen extends ConsumerStatefulWidget {
 class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   final _composer = TextEditingController();
   bool _sending = false;
+  RealtimeChannel? _commentsChannel;
+
+  @override
+  void initState() {
+    super.initState();
+    // Live-update: when the other party adds a comment, push it into
+    // the cache so it appears without pull-to-refresh. We invalidate
+    // commentsProvider (rather than maintain a local list) so threading
+    // + vote merging stay consistent with the fetch path.
+    _commentsChannel = ref.read(postRepositoryProvider).subscribeToPostComments(
+          postId: widget.postId,
+          onComment: (_) {
+            if (!mounted) return;
+            ref.invalidate(commentsProvider(widget.postId));
+          },
+        );
+  }
 
   @override
   void dispose() {
+    _commentsChannel?.unsubscribe();
     _composer.dispose();
     super.dispose();
   }
@@ -35,6 +64,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   Future<void> _send() async {
     final body = _composer.text.trim();
     if (body.isEmpty || _sending) return;
+    HapticFeedback.lightImpact();
     setState(() => _sending = true);
     try {
       await ref.read(postRepositoryProvider).createComment(
@@ -43,8 +73,21 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
           );
       _composer.clear();
       ref.invalidate(commentsProvider(widget.postId));
-    } catch (_) {
-      // swallow — UI doesn't surface errors here in MVP
+    } catch (e) {
+      HapticFeedback.heavyImpact();
+      if (mounted) {
+        final t = AppLocalizations.of(context);
+        final msg = e.toString();
+        String reason = t.comments_err_generic;
+        if (msg.contains('moderation_violation')) {
+          reason = t.comments_err_moderation;
+        } else if (msg.contains('rate_limit_comments_per_hour')) {
+          reason = t.comments_err_rateLimit;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(reason), duration: const Duration(seconds: 3)),
+        );
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -53,6 +96,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final media = MediaQuery.of(context);
     final shape = ref.watch(idShapeProvider);
     final repo = ref.watch(postRepositoryProvider);
@@ -79,23 +123,27 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                         if (post != null) _PostHero(post: post, shape: shape),
                         const SizedBox(height: 6),
                         ...commentsAsync.when(
-                          loading: () => [
-                            const Padding(
-                              padding: EdgeInsets.all(24),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
+                          loading: () => const [
+                            Padding(
+                              padding:
+                                  EdgeInsets.symmetric(vertical: 12),
+                              child: Column(
+                                children: [
+                                  SkelRow(padding: EdgeInsets.zero),
+                                  SizedBox(height: 8),
+                                  SkelRow(padding: EdgeInsets.zero),
+                                  SizedBox(height: 8),
+                                  SkelRow(padding: EdgeInsets.zero),
+                                ],
                               ),
                             ),
                           ],
                           error: (e, _) => [
-                            Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Text(
-                                'تعذّر تحميل التعليقات',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: qurb.danger),
+                            QurbError(
+                              compact: true,
+                              title: t.comments_error_title,
+                              onRetry: () => ref.invalidate(
+                                commentsProvider(widget.postId),
                               ),
                             ),
                           ],
@@ -123,16 +171,11 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                                 },
                               ),
                             if (comments.isEmpty)
-                              Padding(
-                                padding: const EdgeInsets.all(40),
-                                child: Center(
-                                  child: Text(
-                                    'لا تعليقات بعد · كن الأول',
-                                    style: TextStyle(
-                                      color: qurb.textFaint, fontSize: 12,
-                                    ),
-                                  ),
-                                ),
+                              QurbEmpty(
+                                compact: true,
+                                icon: QIcon.reply,
+                                title: t.comments_empty_title,
+                                subtitle: t.comments_empty_subtitle,
                               ),
                           ],
                         ),
@@ -175,7 +218,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                             controller: _composer,
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
-                              hintText: 'اكتب ردك...',
+                              hintText: t.comments_hint,
                               hintStyle: TextStyle(
                                 fontSize: 13, color: qurb.textFaint,
                               ),
@@ -246,6 +289,7 @@ class _CommentsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final media = MediaQuery.of(context);
     return Container(
       padding: EdgeInsets.fromLTRB(8, media.padding.top + 6, 8, 12),
@@ -268,18 +312,15 @@ class _CommentsHeader extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            'منشور',
+            t.comments_header,
             style: TextStyle(
               fontSize: 16, fontWeight: FontWeight.w600, color: qurb.text,
             ),
           ),
           const Spacer(),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: QurbIconWidget(
-              QIcon.more, size: 20, color: qurb.textDim,
-            ),
-          ),
+          // Spacer to mirror the leading back button so the title stays
+          // centred. The post's "more" menu lives inside the post card.
+          const SizedBox(width: 36),
         ],
       ),
     );
@@ -315,9 +356,180 @@ class _PostHeroState extends ConsumerState<_PostHero> {
     } catch (_) {/* ignore */}
   }
 
+  void _showPostMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Post p,
+    QurbColors qurb,
+    AppLocalizations t,
+  ) {
+    final myNumericId = ref.read(myProfileProvider).valueOrNull?.numericId;
+    final isOwner =
+        myNumericId != null && myNumericId == p.authorNumericId;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: qurb.bgElev,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: qurb.borderStrong,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _HeroMenuItem(
+                  icon: QIcon.pin,
+                  label: t.post_menu_save,
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    await ref
+                        .read(profileRepositoryProvider)
+                        .toggleBookmark(p.id);
+                    ref.invalidate(myBookmarksProvider);
+                  },
+                ),
+                if (isOwner) ...[
+                  _HeroMenuItem(
+                    icon: QIcon.more,
+                    label: t.post_menu_edit,
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      await EditPostSheet.show(
+                        context,
+                        postId: p.id,
+                        initialBody: p.body,
+                      );
+                    },
+                  ),
+                  _HeroMenuItem(
+                    icon: QIcon.close,
+                    label: t.post_menu_delete,
+                    color: qurb.danger,
+                    last: true,
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          backgroundColor: qurb.surface,
+                          title: Text(t.post_delete_title,
+                              style: TextStyle(color: qurb.text)),
+                          content: Text(
+                            t.post_delete_body,
+                            style: TextStyle(
+                                color: qurb.textDim, height: 1.6),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(context).pop(false),
+                              child: Text(t.common_cancel,
+                                  style: TextStyle(color: qurb.textDim)),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(context).pop(true),
+                              child: Text(t.post_delete_action,
+                                  style: TextStyle(color: qurb.danger)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (ok != true || !context.mounted) return;
+                      try {
+                        await ref
+                            .read(postRepositoryProvider)
+                            .deleteMyPost(p.id);
+                        ref.invalidate(feedPostsProvider);
+                        if (context.mounted) Navigator.of(context).pop();
+                      } catch (_) {/* ignore */}
+                    },
+                  ),
+                ] else ...[
+                  _HeroMenuItem(
+                    icon: QIcon.flag,
+                    label: t.post_menu_report,
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      await ReportSheet.show(
+                        context,
+                        targetType: 'post',
+                        targetId: p.id,
+                      );
+                    },
+                  ),
+                  _HeroMenuItem(
+                    icon: QIcon.block,
+                    label: t.post_menu_block,
+                    color: qurb.danger,
+                    last: true,
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          backgroundColor: qurb.surface,
+                          title: Text(
+                            t.post_block_title(
+                                p.authorNumericId.toString()),
+                            style: TextStyle(color: qurb.text),
+                          ),
+                          content: Text(
+                            t.post_block_body,
+                            style: TextStyle(
+                                color: qurb.textDim, height: 1.6),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(context).pop(false),
+                              child: Text(t.common_cancel,
+                                  style: TextStyle(color: qurb.textDim)),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(context).pop(true),
+                              child: Text(t.post_block_action,
+                                  style: TextStyle(color: qurb.danger)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (ok == true) {
+                        await ref
+                            .read(profileRepositoryProvider)
+                            .blockUserByPost(p.id);
+                        ref.invalidate(feedPostsProvider);
+                        ref.invalidate(myBlocksProvider);
+                      }
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final p = widget.post;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -338,6 +550,17 @@ class _PostHeroState extends ConsumerState<_PostHero> {
             Text(
               relMinutes(p.minutesAgo),
               style: TextStyle(fontSize: 11, color: qurb.textFaint),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => _showPostMenu(context, ref, p, qurb, t),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: QurbIconWidget(
+                  QIcon.more, size: 18, color: qurb.textFaint,
+                ),
+              ),
             ),
           ],
         ),
@@ -381,7 +604,7 @@ class _PostHeroState extends ConsumerState<_PostHero> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'همس للناشر',
+                      t.post_whisper_author,
                       style: TextStyle(
                         fontSize: 13, color: qurb.text,
                       ),
@@ -392,7 +615,7 @@ class _PostHeroState extends ConsumerState<_PostHero> {
             ),
             const Spacer(),
             Text(
-              '${p.commentsCount} رد',
+              t.post_replies_count(p.commentsCount),
               style: TextStyle(fontSize: 11, color: qurb.textFaint),
             ),
           ],
@@ -432,10 +655,11 @@ class _CommentRowState extends ConsumerState<_CommentRow> {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final c = widget.comment;
     return Padding(
-      padding: EdgeInsets.only(
-        right: widget.depth * 14.0,
+      padding: EdgeInsetsDirectional.only(
+        start: widget.depth * 14.0,
         top: 12, bottom: 12,
       ),
       child: Column(
@@ -483,7 +707,7 @@ class _CommentRowState extends ConsumerState<_CommentRow> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'ردّ',
+                      t.comments_reply,
                       style: TextStyle(
                         fontSize: 11, color: qurb.textFaint,
                       ),
@@ -507,6 +731,51 @@ class _CommentRowState extends ConsumerState<_CommentRow> {
               child: Container(height: 0.5, color: qurb.border),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeroMenuItem extends StatelessWidget {
+  const _HeroMenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+    this.last = false,
+  });
+  final QIcon icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+  final bool last;
+  @override
+  Widget build(BuildContext context) {
+    final qurb = context.qurb;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+        decoration: BoxDecoration(
+          border: last
+              ? null
+              : Border(bottom: BorderSide(color: qurb.border, width: 0.5)),
+        ),
+        child: Row(
+          children: [
+            QurbIconWidget(icon, size: 18, color: color ?? qurb.text),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: color ?? qurb.text,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

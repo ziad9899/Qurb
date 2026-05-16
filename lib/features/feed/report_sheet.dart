@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../profile/data/profile_providers.dart';
 
 class ReportSheet extends ConsumerStatefulWidget {
@@ -45,17 +47,18 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
   bool _busy = false;
   String? _error;
 
-  static const _reasons = <(String, String, String)>[
-    ('spam', 'محتوى مزعج', 'إعلانات، روابط متكررة'),
-    ('harass', 'إساءة شخصية', 'تحرش، تهديد، تنمر'),
-    ('fake', 'معلومات مضللة', 'أخبار كاذبة أو ادعاءات'),
-    ('nsfw', 'محتوى غير لائق', 'إباحية، عنف'),
-    ('private', 'كشف خصوصية', 'معلومات شخص بدون إذن'),
-    ('other', 'سبب آخر', 'سيرسل للمراجعة'),
+  List<(String, String, String)> _reasonsFor(AppLocalizations t) => [
+    ('spam', t.report_reason_spam_title, t.report_reason_spam_desc),
+    ('harass', t.report_reason_harass_title, t.report_reason_harass_desc),
+    ('fake', t.report_reason_fake_title, t.report_reason_fake_desc),
+    ('nsfw', t.report_reason_nsfw_title, t.report_reason_nsfw_desc),
+    ('private', t.report_reason_private_title, t.report_reason_private_desc),
+    ('other', t.report_reason_other_title, t.report_reason_other_desc),
   ];
 
   Future<void> _submit() async {
     if (_reason == null || _busy) return;
+    HapticFeedback.lightImpact();
     setState(() {
       _busy = true;
       _error = null;
@@ -66,12 +69,14 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
             targetId: widget.targetId,
             reason: _reason!,
           );
+      HapticFeedback.mediumImpact();
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
+      final t = AppLocalizations.of(context);
       setState(() {
         _error = e.toString().contains('rate_limit')
-            ? 'وصلت لحدّ البلاغات اليومي (20).'
-            : 'تعذّر إرسال البلاغ.';
+            ? t.report_err_rateLimit
+            : t.report_err_generic;
       });
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -81,6 +86,8 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
+    final reasons = _reasonsFor(t);
     return Container(
       decoration: BoxDecoration(
         color: qurb.bgElev,
@@ -108,8 +115,8 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
               const SizedBox(height: 14),
               Text(
                 widget.targetType == 'comment'
-                    ? 'الإبلاغ عن تعليق'
-                    : 'الإبلاغ عن منشور',
+                    ? t.report_comment_title
+                    : t.report_post_title,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -118,13 +125,13 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
               ),
               const SizedBox(height: 6),
               Text(
-                'سيُراجع الفريق البلاغ خلال 24 ساعة. هويتك تبقى مجهولة تماماً.',
+                t.report_subtitle,
                 style: TextStyle(
                   fontSize: 12, color: qurb.textDim, height: 1.6,
                 ),
               ),
               const SizedBox(height: 16),
-              ..._reasons.map((r) {
+              ...reasons.map((r) {
                 final active = _reason == r.$1;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 6),
@@ -239,7 +246,7 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
                             ),
                           ),
                         )
-                      : const Text('إرسال البلاغ'),
+                      : Text(t.report_submit),
                 ),
               ),
               const SizedBox(height: 8),
@@ -248,7 +255,7 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
                 style: TextButton.styleFrom(
                   foregroundColor: qurb.textDim,
                 ),
-                child: const Text('إلغاء'),
+                child: Text(t.common_cancel),
               ),
             ],
           ),

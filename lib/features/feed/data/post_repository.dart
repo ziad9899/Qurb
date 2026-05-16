@@ -19,9 +19,47 @@ String? _filterToProximity(FeedFilter f) {
   }
 }
 
+/// Server-side radii (meters) keyed by feed filter. Mirrors the labels
+/// shown in the composer: قريب=500م، الحي=2كم، المدينة=15كم.
+double? radiusFor(FeedFilter f) {
+  switch (f) {
+    case FeedFilter.near:
+      return 500;
+    case FeedFilter.block:
+      return 2000;
+    case FeedFilter.city:
+      return 15000;
+    case FeedFilter.all:
+      return null;
+  }
+}
+
 class PostRepository {
   PostRepository(this._client);
   final SupabaseClient _client;
+
+  /// Geographic feed via `posts_near` RPC. Only used when the user has a
+  /// known coordinate; otherwise falls back to `fetchFeed` (proximity-string
+  /// filter) so seeded mock data and pre-Phase-8 rows still appear.
+  Future<List<Post>> fetchFeedNear({
+    required double lat,
+    required double lng,
+    required double radiusM,
+    int limit = 50,
+  }) async {
+    final rows = await _client.rpc(
+      'posts_near',
+      params: {
+        'p_lat': lat,
+        'p_lng': lng,
+        'p_radius_m': radiusM,
+        'p_limit': limit,
+      },
+    );
+    return (rows as List)
+        .map((r) => Post.fromMap(r as Map<String, dynamic>))
+        .toList();
+  }
 
   Future<List<Post>> fetchFeed({
     FeedFilter filter = FeedFilter.near,
@@ -54,6 +92,8 @@ class PostRepository {
     required String body,
     required String? tag,
     required Proximity proximity,
+    double? lat,
+    double? lng,
   }) async {
     final id = await _client.rpc(
       'create_post',
@@ -61,9 +101,27 @@ class PostRepository {
         'p_body': body,
         'p_tag': tag,
         'p_proximity': proximityToWire(proximity),
+        'p_lat': lat,
+        'p_lng': lng,
       },
     );
     return (id as num).toInt();
+  }
+
+  Future<void> updateMyPost({
+    required int postId,
+    required String body,
+  }) async {
+    await _client.rpc('update_my_post', params: {
+      'p_post_id': postId,
+      'p_body': body,
+    });
+  }
+
+  Future<void> deleteMyPost(int postId) async {
+    await _client.rpc('delete_my_post', params: {
+      'p_post_id': postId,
+    });
   }
 
   Future<List<PostComment>> fetchComments(int postId) async {
@@ -92,6 +150,44 @@ class PostRepository {
       },
     );
     return (id as num).toInt();
+  }
+
+  /// Subscribe to new comments on a post via Postgres realtime so the
+  /// other party sees your reply without a manual refresh. The Realtime
+  /// payload comes from the `comments` table (which is now in the
+  /// supabase_realtime publication via migration 011) — we then fetch the
+  /// single row from the view to get the joined author_numeric_id.
+  RealtimeChannel subscribeToPostComments({
+    required int postId,
+    required void Function(PostComment) onComment,
+  }) {
+    final channel = _client
+        .channel('comments-post-$postId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'comments',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'post_id',
+            value: postId,
+          ),
+          callback: (payload) async {
+            final id = (payload.newRecord['id'] as num).toInt();
+            // The view supplies author_numeric_id via a join, which the
+            // bare row doesn't have. Re-fetch the row from the view.
+            final row = await _client
+                .from('comments_for_post')
+                .select()
+                .eq('id', id)
+                .maybeSingle();
+            if (row != null) {
+              onComment(PostComment.fromMap(row));
+            }
+          },
+        )
+      ..subscribe();
+    return channel;
   }
 }
 

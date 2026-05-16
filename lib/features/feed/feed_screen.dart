@@ -4,22 +4,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/location/location_providers.dart';
+import '../../core/location/location_repository.dart';
 import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/qurb_bottom_nav.dart';
 import '../../core/widgets/qurb_icon.dart';
 import '../../core/widgets/skeleton.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../notifications/data/notifications_providers.dart';
 import '../whispers/data/whispers_providers.dart';
 import 'data/feed_providers.dart';
 import 'data/post_repository.dart';
 import 'widgets/post_card.dart';
 
-class FeedScreen extends ConsumerWidget {
+class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FeedScreen> createState() => _FeedScreenState();
+}
+
+class _FeedScreenState extends ConsumerState<FeedScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Kick off location acquisition the moment we land on the feed, but
+    // only if we haven't already resolved it this session — repeated
+    // prompts are annoying. The provider returns null until acquire()
+    // completes, at which point feedPostsProvider rebuilds with the
+    // coordinates and re-issues posts_near.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (ref.read(myLocationProvider) == null) {
+        ref.read(myLocationProvider.notifier).acquire();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final filter = ref.watch(feedFilterProvider);
     final postsAsync = ref.watch(feedPostsProvider);
     final votesAsync = ref.watch(feedVotesProvider);
@@ -47,7 +72,19 @@ class FeedScreen extends ConsumerWidget {
                   child: postsAsync.when(
                     loading: () => const _FeedSkeleton(),
                     error: (e, _) => _FeedError(error: e.toString()),
-                    data: (posts) {
+                    data: (result) {
+                      if (result is FeedLocationNeeded) {
+                        return _FeedLocationNeeded(
+                          status: ref.watch(myLocationProvider),
+                          onEnable: () async {
+                            await ref
+                                .read(myLocationProvider.notifier)
+                                .acquire();
+                            ref.invalidate(feedPostsProvider);
+                          },
+                        );
+                      }
+                      final posts = (result as FeedReady).posts;
                       if (posts.isEmpty) {
                         return _FeedEmpty();
                       }
@@ -66,7 +103,7 @@ class FeedScreen extends ConsumerWidget {
                               padding: const EdgeInsets.all(20),
                               child: Center(
                                 child: Text(
-                                  '— هذا كل ما يحدث قريباً منك الآن —',
+                                  t.feed_end_marker,
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: qurb.textFaint,
@@ -127,6 +164,7 @@ class _Header extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final media = MediaQuery.of(context);
     final unreadNotifs = ref.watch(notificationsUnreadCountProvider);
     final hasUnreadNotifs = unreadNotifs.maybeWhen(
@@ -152,7 +190,7 @@ class _Header extends ConsumerWidget {
                 child: Row(
                   children: [
                     Text(
-                      'قُرب',
+                      t.feed_appName,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
@@ -169,7 +207,7 @@ class _Header extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'الرياض',
+                      t.feed_location_riyadh,
                       style: TextStyle(
                         fontSize: 11, color: qurb.textDim,
                       ),
@@ -237,10 +275,10 @@ class _Header extends ConsumerWidget {
                   child: Row(
                     children: [
                       for (final f in [
-                        (FeedFilter.near, 'قريب منك'),
-                        (FeedFilter.block, 'الحي'),
-                        (FeedFilter.city, 'المدينة'),
-                        (FeedFilter.all, 'الكل'),
+                        (FeedFilter.near, t.feed_filter_near),
+                        (FeedFilter.block, t.feed_filter_block),
+                        (FeedFilter.city, t.feed_filter_city),
+                        (FeedFilter.all, t.feed_filter_all),
                       ])
                         Padding(
                           padding: const EdgeInsets.only(left: 6),
@@ -337,6 +375,7 @@ class _FeedError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -344,7 +383,7 @@ class _FeedError extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'تعذّر تحميل المنشورات',
+              t.feed_error_title,
               style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.w600, color: qurb.text,
               ),
@@ -362,10 +401,88 @@ class _FeedError extends StatelessWidget {
   }
 }
 
+class _FeedLocationNeeded extends StatelessWidget {
+  const _FeedLocationNeeded({required this.status, required this.onEnable});
+  final LocationResult? status;
+  final Future<void> Function() onEnable;
+  @override
+  Widget build(BuildContext context) {
+    final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
+    final subtitle = switch (status) {
+      LocationDenied(permanent: true) => t.feed_location_denied_subtitle,
+      LocationServiceOff() => t.feed_location_serviceOff_subtitle,
+      _ => t.feed_location_needed_subtitle,
+    };
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        const SizedBox(height: 100),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Column(
+              children: [
+                Container(
+                  width: 64, height: 64,
+                  decoration: BoxDecoration(
+                    color: qurb.accentSoft, shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: QurbIconWidget(
+                      QIcon.pin, size: 28, color: qurb.accent,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  t.feed_location_needed_title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w600,
+                    color: qurb.text,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12, color: qurb.textDim, height: 1.7,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                ElevatedButton(
+                  onPressed: onEnable,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: qurb.accent,
+                    foregroundColor: const Color(0xFFFFFFFF),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22, vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: Text(t.feed_location_needed_cta),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _FeedEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
@@ -389,7 +506,7 @@ class _FeedEmpty extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'لا منشورات قريبة منك الآن',
+                  t.feed_empty_title,
                   style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.w600,
                     color: qurb.text,
@@ -397,7 +514,7 @@ class _FeedEmpty extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'كن أوّل من ينشر شيئاً في منطقتك.',
+                  t.feed_empty_subtitle,
                   style: TextStyle(fontSize: 12, color: qurb.textDim),
                 ),
               ],

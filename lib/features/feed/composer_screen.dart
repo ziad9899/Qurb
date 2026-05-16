@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_providers.dart';
 import '../../core/data/mock_data.dart' show Proximity;
+import '../../core/location/location_providers.dart';
 import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/id_badge.dart';
 import '../../core/widgets/qurb_icon.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 import 'data/feed_providers.dart';
 
-const _kTags = ['حكايات', 'مشاعر', 'نقاش', 'مساعدة', 'لحظة', 'سؤال'];
+// Tag ordering. Labels come from AppLocalizations.compose_tag_* at render
+// time so they switch language with the rest of the UI; this list pins the
+// canonical wire keys persisted on the server.
+const _kTagKeys = ['stories', 'feelings', 'discussion', 'help', 'moment', 'question'];
+
+String _tagLabel(AppLocalizations t, String key) => switch (key) {
+      'stories' => t.compose_tag_stories,
+      'feelings' => t.compose_tag_feelings,
+      'discussion' => t.compose_tag_discussion,
+      'help' => t.compose_tag_help,
+      'moment' => t.compose_tag_moment,
+      'question' => t.compose_tag_question,
+      _ => key,
+    };
 
 class ComposerScreen extends ConsumerStatefulWidget {
   const ComposerScreen({super.key});
@@ -21,7 +37,7 @@ class ComposerScreen extends ConsumerStatefulWidget {
 class _ComposerScreenState extends ConsumerState<ComposerScreen> {
   final _controller = TextEditingController();
   Proximity _scope = Proximity.near;
-  String _tag = _kTags.first;
+  String _tag = _kTagKeys.first;
   bool _busy = false;
   String? _error;
   static const _max = 500;
@@ -36,20 +52,32 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
     if (_busy) return;
     final body = _controller.text.trim();
     if (body.isEmpty) return;
+    HapticFeedback.lightImpact();
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
+      // Best-effort: acquire location if not yet granted. The OS prompt
+      // appears the first time the user publishes — a context they expect
+      // ("ينشر قريبًا منك" already implies geography).
+      var coords = latLngFrom(ref.read(myLocationProvider));
+      if (coords == null) {
+        await ref.read(myLocationProvider.notifier).acquire();
+        coords = latLngFrom(ref.read(myLocationProvider));
+      }
       await ref.read(postRepositoryProvider).createPost(
             body: body,
             tag: _tag,
             proximity: _scope,
+            lat: coords?.lat,
+            lng: coords?.lng,
           );
-      // Force feed refresh so the new post appears
       ref.invalidate(feedPostsProvider);
+      HapticFeedback.mediumImpact();
       if (mounted) context.pop();
     } catch (e) {
+      HapticFeedback.heavyImpact();
       setState(() => _error = _humanizeError(e.toString()));
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -57,18 +85,17 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
   }
 
   String _humanizeError(String s) {
-    if (s.contains('rate_limit_posts_per_day')) {
-      return 'وصلت للحدّ اليومي (10 منشورات). جرّب لاحقاً.';
-    }
-    if (s.contains('body length out of range')) {
-      return 'طول النص خارج الحدود.';
-    }
-    return 'تعذّر النشر. تحقق من اتصالك.';
+    final t = AppLocalizations.of(context);
+    if (s.contains('rate_limit_posts_per_day')) return t.compose_err_rateLimit;
+    if (s.contains('moderation_violation')) return t.compose_err_moderation;
+    if (s.contains('body length out of range')) return t.compose_err_length;
+    return t.compose_err_generic;
   }
 
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     final media = MediaQuery.of(context);
     final profileAsync = ref.watch(myProfileProvider);
     final shape = ref.watch(idShapeProvider);
@@ -96,7 +123,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                 ),
                 const Spacer(),
                 Text(
-                  'منشور جديد',
+                  t.compose_title,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -125,7 +152,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'سيظهر منشورك مع معرفك فقط',
+                  t.compose_id_hint,
                   style: TextStyle(fontSize: 12, color: qurb.textDim),
                 ),
               ],
@@ -148,7 +175,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                   height: 1.65,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'ما الذي يحدث قريباً منك؟',
+                  hintText: t.compose_hint,
                   hintStyle: TextStyle(
                     fontSize: 18,
                     color: qurb.textFaint,
@@ -180,7 +207,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'أين سيُرى منشورك؟',
+                        t.compose_scope_label,
                         style: TextStyle(
                           fontSize: 11,
                           color: qurb.textFaint,
@@ -190,14 +217,14 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          for (final s in const [
-                            (Proximity.near, 'قريب', '500م'),
-                            (Proximity.block, 'الحي', '2كم'),
-                            (Proximity.city, 'المدينة', 'كل الرياض'),
+                          for (final s in [
+                            (Proximity.near, t.compose_scope_near_label, t.compose_scope_near_desc),
+                            (Proximity.block, t.compose_scope_block_label, t.compose_scope_block_desc),
+                            (Proximity.city, t.compose_scope_city_label, t.compose_scope_city_desc),
                           ])
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.only(left: 6),
+                                padding: const EdgeInsetsDirectional.only(end: 6),
                                 child: _ScopeTile(
                                   active: _scope == s.$1,
                                   label: s.$2,
@@ -219,7 +246,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'الوسم',
+                        t.compose_tag_label,
                         style: TextStyle(
                           fontSize: 11,
                           color: qurb.textFaint,
@@ -231,33 +258,34 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            for (final t in _kTags)
+                            for (final key in _kTagKeys)
                               Padding(
-                                padding: const EdgeInsets.only(left: 6),
+                                padding:
+                                    const EdgeInsetsDirectional.only(end: 6),
                                 child: GestureDetector(
-                                  onTap: () => setState(() => _tag = t),
+                                  onTap: () => setState(() => _tag = key),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 11, vertical: 5,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: t == _tag
+                                      color: key == _tag
                                           ? qurb.gold
                                           : qurb.surface,
                                       borderRadius: BorderRadius.circular(999),
-                                      border: t == _tag
+                                      border: key == _tag
                                           ? null
                                           : Border.all(
                                               color: qurb.border, width: 0.5),
                                     ),
                                     child: Text(
-                                      '#$t',
+                                      '#${_tagLabel(t, key)}',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        fontWeight: t == _tag
+                                        fontWeight: key == _tag
                                             ? FontWeight.w600
                                             : FontWeight.w500,
-                                        color: t == _tag
+                                        color: key == _tag
                                             ? const Color(0xFF0A0A0B)
                                             : qurb.textDim,
                                       ),
@@ -399,6 +427,7 @@ class _PublishButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
     return GestureDetector(
       onTap: enabled ? onPressed : null,
       child: Container(
@@ -418,7 +447,7 @@ class _PublishButton extends StatelessWidget {
                 ),
               )
             : Text(
-                'نشر',
+                t.compose_publish,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

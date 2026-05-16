@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Abstract activity heatmap. Mirrors the web design's PulseMap:
 /// a dotted grid + 9 weighted heat blobs + an animated ping marking "you".
@@ -220,7 +221,7 @@ class _YouLabel extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
-              'أنت',
+              AppLocalizations.of(context).trend_pulse_you,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
