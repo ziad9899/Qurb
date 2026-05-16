@@ -401,12 +401,13 @@ class _FeedError extends StatelessWidget {
   }
 }
 
-class _FeedLocationNeeded extends StatelessWidget {
+class _FeedLocationNeeded extends ConsumerWidget {
   const _FeedLocationNeeded({required this.status, required this.onEnable});
   final LocationResult? status;
   final Future<void> Function() onEnable;
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final acquiring = ref.watch(locationAcquiringProvider);
     final qurb = context.qurb;
     final t = AppLocalizations.of(context);
     final subtitle = switch (status) {
@@ -453,10 +454,18 @@ class _FeedLocationNeeded extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 ElevatedButton(
-                  onPressed: onEnable,
+                  // Disabling onPressed while acquiring closes the
+                  // double-tap race (two concurrent OS prompts) at
+                  // the UI layer; the controller already guards
+                  // against it at the model layer.
+                  onPressed: acquiring ? null : onEnable,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: qurb.accent,
                     foregroundColor: const Color(0xFFFFFFFF),
+                    disabledBackgroundColor:
+                        qurb.accent.withValues(alpha: 0.5),
+                    disabledForegroundColor:
+                        const Color(0xCCFFFFFF),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 22, vertical: 12,
                     ),
@@ -467,7 +476,17 @@ class _FeedLocationNeeded extends StatelessWidget {
                       fontSize: 14, fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: Text(t.feed_location_needed_cta),
+                  child: acquiring
+                      ? const SizedBox(
+                          height: 16, width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFFFFFFF),
+                            ),
+                          ),
+                        )
+                      : Text(t.feed_location_needed_cta),
                 ),
               ],
             ),

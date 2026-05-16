@@ -33,10 +33,25 @@ class _WhisperThreadScreenState
     extends ConsumerState<WhisperThreadScreen> {
   final _composer = TextEditingController();
   final _scrollC = ScrollController();
+  // Bounded buffer of messages received from the realtime channel +
+  // optimistic placeholders. Capped at [_kLiveAddedMax] to prevent
+  // unbounded growth in long-lived sessions on busy threads.
+  static const int _kLiveAddedMax = 500;
   final List<ChatMessage> _liveAdded = [];
   RealtimeChannel? _channel;
   bool _sending = false;
   int? _otherNumericId;
+
+  void _appendLive(ChatMessage m) {
+    // Dedupe by id — realtime sometimes delivers a row twice, and our
+    // own outgoing message arrives both as `sendMessage` returning a
+    // real id *and* as a realtime INSERT for the same row.
+    if (_liveAdded.any((x) => x.id == m.id)) return;
+    _liveAdded.add(m);
+    if (_liveAdded.length > _kLiveAddedMax) {
+      _liveAdded.removeRange(0, _liveAdded.length - _kLiveAddedMax);
+    }
+  }
 
   @override
   void initState() {
@@ -64,7 +79,7 @@ class _WhisperThreadScreenState
       chatId: widget.chatId,
       onMessage: (m) {
         if (!mounted) return;
-        setState(() => _liveAdded.add(m));
+        setState(() => _appendLive(m));
         _scrollToBottomSoon();
       },
     );
@@ -105,7 +120,7 @@ class _WhisperThreadScreenState
       createdAt: DateTime.now(),
     );
     setState(() {
-      _liveAdded.add(ph);
+      _appendLive(ph);
       _composer.clear();
     });
     _scrollToBottomSoon();
@@ -114,18 +129,20 @@ class _WhisperThreadScreenState
         chatId: widget.chatId, body: body,
       );
       if (!mounted) return;
-      // replace placeholder with real id
+      // Drop the placeholder. The realtime INSERT for this row will
+      // deliver the canonical real-id message; if it already arrived
+      // (race), _appendLive's dedupe keeps a single entry. Doing
+      // in-place replace used to leave both the placeholder and the
+      // realtime-delivered real-id row in _liveAdded — a slow leak.
       setState(() {
-        final idx = _liveAdded.indexWhere((m) => m.id == ph.id);
-        if (idx >= 0) {
-          _liveAdded[idx] = ChatMessage(
-            id: realId,
-            chatId: ph.chatId,
-            body: ph.body,
-            isMine: true,
-            createdAt: ph.createdAt,
-          );
-        }
+        _liveAdded.removeWhere((m) => m.id == ph.id);
+        _appendLive(ChatMessage(
+          id: realId,
+          chatId: ph.chatId,
+          body: ph.body,
+          isMine: true,
+          createdAt: ph.createdAt,
+        ));
       });
     } catch (e) {
       if (!mounted) return;

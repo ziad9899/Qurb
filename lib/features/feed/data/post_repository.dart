@@ -153,13 +153,18 @@ class PostRepository {
   }
 
   /// Subscribe to new comments on a post via Postgres realtime so the
-  /// other party sees your reply without a manual refresh. The Realtime
-  /// payload comes from the `comments` table (which is now in the
-  /// supabase_realtime publication via migration 011) — we then fetch the
-  /// single row from the view to get the joined author_numeric_id.
+  /// other party sees your reply without a manual refresh.
+  ///
+  /// The callback fires with no payload — it is a notification, not a
+  /// data delivery. The screen owns a debounced `ref.invalidate` to
+  /// coalesce bursts. The previous version did a per-INSERT
+  /// `comments_for_post?id=eq.X` fetch just to recover the joined
+  /// `author_numeric_id`, then the screen invalidated the whole list
+  /// anyway → two REST trips per comment. Now we do zero extra fetches
+  /// in the subscription path.
   RealtimeChannel subscribeToPostComments({
     required int postId,
-    required void Function(PostComment) onComment,
+    required void Function() onChange,
   }) {
     final channel = _client
         .channel('comments-post-$postId')
@@ -172,19 +177,7 @@ class PostRepository {
             column: 'post_id',
             value: postId,
           ),
-          callback: (payload) async {
-            final id = (payload.newRecord['id'] as num).toInt();
-            // The view supplies author_numeric_id via a join, which the
-            // bare row doesn't have. Re-fetch the row from the view.
-            final row = await _client
-                .from('comments_for_post')
-                .select()
-                .eq('id', id)
-                .maybeSingle();
-            if (row != null) {
-              onComment(PostComment.fromMap(row));
-            }
-          },
+          callback: (_) => onChange(),
         )
       ..subscribe();
     return channel;

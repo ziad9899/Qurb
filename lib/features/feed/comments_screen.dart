@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -39,6 +40,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   final _composerFocus = FocusNode();
   bool _sending = false;
   RealtimeChannel? _commentsChannel;
+  Timer? _liveDebounce;
 
   // WhatsApp-style reply target: when the user taps "Reply" on a
   // comment, the composer focuses, the keyboard opens, and a chip
@@ -50,21 +52,30 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   @override
   void initState() {
     super.initState();
-    // Live-update: when the other party adds a comment, push it into
-    // the cache so it appears without pull-to-refresh. We invalidate
-    // commentsProvider (rather than maintain a local list) so threading
-    // + vote merging stay consistent with the fetch path.
+    // Live-update on incoming comments. The realtime callback only
+    // signals "something changed" — we invalidate the provider so
+    // threading + vote merging stay consistent with the fetch path.
+    // A 250 ms debounce coalesces bursts (multiple comments arriving
+    // in quick succession trigger a single refetch instead of N).
     _commentsChannel = ref.read(postRepositoryProvider).subscribeToPostComments(
           postId: widget.postId,
-          onComment: (_) {
+          onChange: () {
             if (!mounted) return;
-            ref.invalidate(commentsProvider(widget.postId));
+            _liveDebounce?.cancel();
+            _liveDebounce = Timer(
+              const Duration(milliseconds: 250),
+              () {
+                if (!mounted) return;
+                ref.invalidate(commentsProvider(widget.postId));
+              },
+            );
           },
         );
   }
 
   @override
   void dispose() {
+    _liveDebounce?.cancel();
     _commentsChannel?.unsubscribe();
     _composer.dispose();
     _composerFocus.dispose();
@@ -129,9 +140,14 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
     final t = AppLocalizations.of(context);
     final media = MediaQuery.of(context);
     final shape = ref.watch(idShapeProvider);
-    final repo = ref.watch(postRepositoryProvider);
     final commentsAsync = ref.watch(commentsProvider(widget.postId));
     final commentVotes = ref.watch(commentVotesProvider(widget.postId));
+    // Hoisted out of FutureBuilder so composer keystrokes (which
+    // trigger setState for character-count UI) do not re-issue a
+    // `posts_feed?id=eq.X` REST call on every key. The provider
+    // caches the resolved post for the screen's lifetime; pull-to-
+    // refresh / edit / delete invalidate it explicitly when needed.
+    final postAsync = ref.watch(postByIdProvider(widget.postId));
 
     return Scaffold(
       backgroundColor: qurb.bg,
@@ -141,10 +157,9 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
             children: [
               _CommentsHeader(),
               Expanded(
-                child: FutureBuilder<Post?>(
-                  future: repo.fetchPost(widget.postId),
-                  builder: (context, snap) {
-                    final post = snap.data;
+                child: Builder(
+                  builder: (context) {
+                    final post = postAsync.valueOrNull;
                     return ListView(
                       padding: EdgeInsets.fromLTRB(
                         18, 14, 18, 130 + media.padding.bottom,

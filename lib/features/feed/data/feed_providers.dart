@@ -81,6 +81,15 @@ final commentsProvider = FutureProvider.autoDispose
   return ref.watch(postRepositoryProvider).fetchComments(postId);
 });
 
+/// Single-post fetch keyed by id. Provided so screens can read the post
+/// once via `ref.watch(postByIdProvider(id))` instead of constructing a
+/// fresh `Future` inside `build()` — the old `FutureBuilder(future: ...)`
+/// pattern was re-issuing a REST call on every composer keystroke.
+final postByIdProvider = FutureProvider.autoDispose
+    .family<Post?, int>((ref, postId) async {
+  return ref.watch(postRepositoryProvider).fetchPost(postId);
+});
+
 final commentVotesProvider = FutureProvider.autoDispose
     .family<Map<String, int>, int>((ref, postId) async {
   final threaded = await ref.watch(commentsProvider(postId).future);

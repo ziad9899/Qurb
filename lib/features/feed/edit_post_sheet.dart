@@ -72,6 +72,10 @@ class _EditPostSheetState extends ConsumerState<EditPostSheet> {
             body: body,
           );
       ref.invalidate(feedPostsProvider);
+      // The detail-screen hoisted the post into postByIdProvider;
+      // invalidate it so the new body + edited_at are visible
+      // without re-mounting the screen.
+      ref.invalidate(postByIdProvider(widget.postId));
       HapticFeedback.mediumImpact();
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
