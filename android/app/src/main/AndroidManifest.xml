@@ -1,7 +1,29 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      Permissions:
+        * ACCESS_COARSE_LOCATION / ACCESS_FINE_LOCATION — Qurb snaps
+          GPS to a 100m grid before storage; the OS dialog still
+          requires one of these to read GPS once at launch.
+        * INTERNET — Supabase REST + Realtime.
+        * ACCESS_NETWORK_STATE — lets the app detect offline state
+          before showing "couldn't load" UI.
+      We intentionally do NOT request background location, camera,
+      microphone, contacts, or notifications at this stage.
+    -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- Mark location as not required so the app still installs on
+         tablets without GPS hardware (foreground feed still works
+         with the city-wide filter even without permission). -->
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false"/>
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false"/>
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"

@@ -18,7 +18,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>minto</string>
+	<string>Qurb</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -52,5 +52,13 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Qurb uses your location only to show what's happening near you. We never share your location with another user — it is stored as a 100m grid cell only.</string>
+	<!--
+	  Export-compliance: Qurb only uses standard HTTPS (Supabase) and the
+	  iOS-provided keychain/crypto. Declaring this avoids the TestFlight
+	  encryption prompt on every upload. App Store Connect treats
+	  ITSAppUsesNonExemptEncryption=false as "uses exempt encryption only".
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
