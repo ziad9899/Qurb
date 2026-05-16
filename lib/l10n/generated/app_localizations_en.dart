@@ -296,6 +296,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get comments_cancel_reply => 'Cancel reply';
 
   @override
+  String get comments_send_a11y => 'Send comment';
+
+  @override
+  String get common_more_a11y => 'More options';
+
+  @override
   String get whispers_header => 'Whispers';
 
   @override

@@ -11,6 +11,7 @@ import '../../core/theme/qurb_theme.dart';
 import '../../core/util/relative_time.dart';
 import '../../core/widgets/id_badge.dart';
 import '../../core/widgets/proximity_chip.dart';
+import '../../core/widgets/qurb_back_button.dart';
 import '../../core/widgets/qurb_empty.dart';
 import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
@@ -276,10 +277,13 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      GestureDetector(
+                      Semantics(
+                      button: true,
+                      label: t.comments_send_a11y,
+                      child: GestureDetector(
                         onTap: _send,
                         child: Container(
-                          width: 40, height: 40,
+                          width: 44, height: 44,
                           decoration: BoxDecoration(
                             color: qurb.accent,
                             borderRadius: BorderRadius.circular(20),
@@ -313,6 +317,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                                 ),
                         ),
                       ),
+                      ),
                     ],
                   ),
                     ],
@@ -343,15 +348,7 @@ class _CommentsHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.maybePop(context),
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: QurbIconWidget(
-                QIcon.chevron, size: 22, color: qurb.text,
-              ),
-            ),
-          ),
+          const QurbBackButton(),
           const Spacer(),
           Text(
             t.comments_header,

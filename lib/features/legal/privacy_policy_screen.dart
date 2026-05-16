@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/qurb_theme.dart';
-import '../../core/widgets/qurb_icon.dart';
+import '../../core/widgets/qurb_back_button.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
@@ -82,15 +82,7 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.maybePop(context),
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: QurbIconWidget(
-                QIcon.chevron, size: 22, color: qurb.text,
-              ),
-            ),
-          ),
+          const QurbBackButton(),
           const Spacer(),
           Text(
             title,

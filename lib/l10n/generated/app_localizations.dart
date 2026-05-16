@@ -638,6 +638,18 @@ abstract class AppLocalizations {
   /// **'Cancel reply'**
   String get comments_cancel_reply;
 
+  /// No description provided for @comments_send_a11y.
+  ///
+  /// In en, this message translates to:
+  /// **'Send comment'**
+  String get comments_send_a11y;
+
+  /// No description provided for @common_more_a11y.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get common_more_a11y;
+
   /// No description provided for @whispers_header.
   ///
   /// In en, this message translates to:

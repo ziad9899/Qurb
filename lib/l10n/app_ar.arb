@@ -99,6 +99,8 @@
   "comments_reply": "ردّ",
   "comments_replying_to": "ترد على #{id}",
   "comments_cancel_reply": "إلغاء الرد",
+  "comments_send_a11y": "إرسال التعليق",
+  "common_more_a11y": "خيارات إضافية",
 
   "whispers_header": "همس",
   "whispers_requests_label": "طلبات هَمس",

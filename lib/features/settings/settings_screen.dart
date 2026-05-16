@@ -6,6 +6,7 @@ import '../../core/auth/auth_providers.dart';
 import '../../core/prefs/prefs_providers.dart';
 import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/id_badge.dart';
+import '../../core/widgets/qurb_back_button.dart';
 import '../../core/widgets/qurb_icon.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../profile/data/profile_providers.dart';
@@ -48,15 +49,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap: () => Navigator.maybePop(context),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: QurbIconWidget(
-                      QIcon.chevron, size: 22, color: qurb.text,
-                    ),
-                  ),
-                ),
+                const QurbBackButton(),
                 const Spacer(),
                 Text(
                   t.settings_header,

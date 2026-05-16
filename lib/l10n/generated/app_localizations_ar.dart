@@ -293,6 +293,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get comments_cancel_reply => 'إلغاء الرد';
 
   @override
+  String get comments_send_a11y => 'إرسال التعليق';
+
+  @override
+  String get common_more_a11y => 'خيارات إضافية';
+
+  @override
   String get whispers_header => 'همس';
 
   @override
