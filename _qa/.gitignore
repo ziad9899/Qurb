@@ -1,2 +1,7 @@
+# Scripts that hard-code the Supabase PAT are kept local-only.
+# smoke_hail.ps1 uses anon key only and is safe to commit.
 apply_*.ps1
+deploy_*.ps1
+setup_*.ps1
+fix_*.ps1
 *.json

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index, follow">
+  <title>سياسة الخصوصية · Privacy Policy — Qurb</title>
+  <meta name="description" content="Qurb (قُرب) anonymous location-based community — privacy policy.">
+  <style>
+    :root {
+      --bg: #0c0d10;
+      --surface: #15171c;
+      --border: #23262e;
+      --text: #f1f3f5;
+      --dim: #aab2bd;
+      --faint: #6b7280;
+      --accent: #ffd84d;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #ffffff;
+        --surface: #f6f7f9;
+        --border: #e5e7eb;
+        --text: #111418;
+        --dim: #4b5563;
+        --faint: #6b7280;
+        --accent: #b8860b;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma,
+                   sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 22px 80px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .lang-toggle {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+      font-size: 13px;
+    }
+    .lang-toggle button {
+      background: transparent;
+      color: var(--dim);
+      border: 0;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font: inherit;
+    }
+    .lang-toggle button.active {
+      background: var(--accent);
+      color: #1a1300;
+      font-weight: 600;
+    }
+    .meta {
+      color: var(--faint);
+      font-size: 12.5px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      letter-spacing: -0.01em;
+    }
+    h2 {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 28px 0 8px;
+      color: var(--text);
+    }
+    p, li {
+      color: var(--dim);
+      font-size: 14.5px;
+      line-height: 1.85;
+    }
+    ul { padding-inline-start: 22px; }
+    a { color: var(--accent); }
+    .doc { display: none; }
+    .doc.active { display: block; }
+    .contact {
+      margin-top: 32px;
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+    .contact strong { color: var(--text); }
+    footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--faint);
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span>Qurb</span>
+      </div>
+      <div class="lang-toggle" role="tablist" aria-label="Language">
+        <button id="btn-ar" class="active" role="tab" aria-selected="true">العربية</button>
+        <button id="btn-en" role="tab" aria-selected="false">English</button>
+      </div>
+    </header>
+
+    <!-- =================== Arabic =================== -->
+    <main id="doc-ar" class="doc active" lang="ar" dir="rtl">
+      <h1>سياسة الخصوصية</h1>
+      <p class="meta">آخر تحديث: 16 مايو 2026</p>
+      <p>قُرب (Qurb) خدمة محادثة مجهولة قائمة على الموقع. سياسة الخصوصية هذه تشرح بدقّة ما الذي نجمعه، ولماذا، وما لا نجمعه أبداً.</p>
+
+      <h2>١. هويتك</h2>
+      <p>عند فتح التطبيق نُنشئ لك معرّفاً رقمياً عشوائياً من خمس خانات (مثال: <code>#48216</code>) ومعرّفاً داخلياً مجهولاً (UUID). لا نطلب اسمك ولا بريدك ولا رقم هاتفك ولا صورتك. هذا المعرّف الرقمي هو الوحيد الذي يراه المستخدمون الآخرون.</p>
+
+      <h2>٢. الموقع</h2>
+      <p>إذا أذنت بمشاركة الموقع، تُربط إحداثيات جهازك إلى <strong>خلية شبكية بدقة 100 متر</strong> قبل أن تغادر الجهاز. لا نخزّن أو نُرسل GPS دقيقاً أبداً. المستخدمون الآخرون يرون نطاقات نسبية فقط (قريب / الحي / المدينة) — ولا يرون الإحداثيات الخام.</p>
+      <p>يمكنك سحب إذن الموقع متى شئت من إعدادات الجهاز؛ وسيظل بإمكانك تصفّح "المدينة" دون مشاركة موقع.</p>
+
+      <h2>٣. محتواك</h2>
+      <p>المنشورات والتعليقات علنية للمستخدمين القريبين منك جغرافياً. الهمسات خاصة بين الطرفين فقط، ومحفوظة في قاعدة بيانات تستخدم تشفير TLS عند النقل وتشفير القرص عند التخزين.</p>
+
+      <h2>٤. التوكنات والإشعارات</h2>
+      <p>عند استخدام نظام الإشعارات (مستقبلاً) قد نخزّن توكن جهاز APNs/FCM لإرسال تنبيهات. هذا التوكن مربوط بمعرّفك المجهول فقط، ويُحذَف عند تسجيل الخروج أو حذف الحساب.</p>
+
+      <h2>٥. الإشراف</h2>
+      <p>نُجري فحوصات تلقائية على النصوص للكشف عن:</p>
+      <ul>
+        <li>قائمة كلمات محظورة (سباب، خطاب كراهية).</li>
+        <li>أنماط الاحتيال والإعلانات (أرقام هواتف، روابط مختصرة، روابط تيليجرام/واتساب).</li>
+      </ul>
+      <p>المحتوى المُبلَّغ عنه من 3 مستخدمين أو أكثر خلال 24 ساعة يُخفى تلقائياً بانتظار المراجعة. لا نقرأ محتوى الهمسات الخاصة إلا إذا أبلَغ أحد الطرفين عن رسالة.</p>
+
+      <h2>٦. ما لا نشاركه</h2>
+      <ul>
+        <li>لا نبيع بياناتك لأي طرف ثالث.</li>
+        <li>لا نُشغّل إعلانات أو أدوات تتبّع طرف ثالث.</li>
+        <li>لا نشارك موقعك مع أي مستخدم آخر.</li>
+        <li>لا ندمج بياناتك مع تطبيقات أو مواقع أخرى.</li>
+      </ul>
+
+      <h2>٧. تخزين البيانات والاحتفاظ بها</h2>
+      <p>تُستضاف البيانات على خوادم Supabase (مدعومة من AWS). نحتفظ بمحتواك طالما حسابك نشط. عند حذف الحساب من الإعدادات، تُحذَف منشوراتك وتعليقاتك ومحادثاتك وموقعك بشكل دائم خلال أيام، وتُغفل بقية السجلات المرتبطة.</p>
+
+      <h2>٨. حقوقك</h2>
+      <ul>
+        <li><strong>الوصول والتعديل</strong>: ملفك الشخصي وكل ما نشرته معروض داخل التطبيق.</li>
+        <li><strong>الحذف</strong>: «الإعدادات ‹ حذف الحساب» يحذف كل شيء بشكل لا رجعة فيه.</li>
+        <li><strong>سحب الإذن</strong>: يمكنك إيقاف مشاركة الموقع من إعدادات الجهاز في أي وقت.</li>
+      </ul>
+
+      <h2>٩. الأطفال</h2>
+      <p>قُرب غير مخصّص لمن هم دون الثالثة عشرة. إذا اكتشفنا حساباً لمستخدم أصغر، نحذفه فوراً.</p>
+
+      <h2>١٠. التغييرات على هذه السياسة</h2>
+      <p>قد نُحدّث هذه السياسة. عند أي تغيير جوهري سنُحدّث تاريخ "آخر تحديث" أعلاه، ونُشعِرك داخل التطبيق إذا لزم.</p>
+
+      <div class="contact">
+        <strong>للتواصل أو الإبلاغ:</strong>
+        افتح التطبيق ‹ الإعدادات ‹ الإبلاغ عن مشكلة، أو راسلنا على
+        <a href="mailto:privacy@qurb.app">privacy@qurb.app</a>.
+      </div>
+    </main>
+
+    <!-- =================== English =================== -->
+    <main id="doc-en" class="doc" lang="en" dir="ltr">
+      <h1>Privacy Policy</h1>
+      <p class="meta">Last updated: May 16, 2026</p>
+      <p>Qurb is an anonymous, location-based community app. This policy explains in detail what we collect, why, and what we deliberately never collect.</p>
+
+      <h2>1. Your identity</h2>
+      <p>When you open the app we generate a random 5-digit numeric ID (e.g. <code>#48216</code>) and an internal anonymous UUID. We never ask for your name, email, phone number, or photo. The numeric ID is the only identifier other users see.</p>
+
+      <h2>2. Location</h2>
+      <p>If you grant location permission, your device coordinates are snapped to a <strong>100-meter grid cell</strong> before they leave the device. We never store or transmit precise GPS. Other users only see relative ranges (Near / Block / City) and never see raw coordinates.</p>
+      <p>You can revoke location permission at any time from your device settings; the City-wide feed still works without location.</p>
+
+      <h2>3. Your content</h2>
+      <p>Posts and comments are public to nearby users. Whispers (DMs) are visible only to the two participants and stored in a database that uses TLS in transit and disk encryption at rest.</p>
+
+      <h2>4. Tokens and notifications</h2>
+      <p>If/when you enable push notifications, we may store an APNs/FCM device token to deliver alerts. This token is bound to your anonymous ID only and is deleted on sign-out or account deletion.</p>
+
+      <h2>5. Moderation</h2>
+      <p>We run automated checks on text for:</p>
+      <ul>
+        <li>A list of disallowed words (profanity, hate speech).</li>
+        <li>Scam and ad patterns (phone numbers, shortened URLs, Telegram/WhatsApp deep-links).</li>
+      </ul>
+      <p>Content reported by 3 or more users within 24 hours is auto-hidden pending review. We do not read the content of private whispers unless one party reports a specific message.</p>
+
+      <h2>6. What we do not share</h2>
+      <ul>
+        <li>We never sell your data to any third party.</li>
+        <li>We run no ads and no third-party tracking SDKs.</li>
+        <li>We never share your location with any other user.</li>
+        <li>We do not combine your data with other apps or sites.</li>
+      </ul>
+
+      <h2>7. Storage and retention</h2>
+      <p>Data is hosted on Supabase (backed by AWS). We retain your content as long as your account is active. When you delete your account from Settings, your posts, comments, chats, and location data are permanently removed within days; remaining metadata is anonymized.</p>
+
+      <h2>8. Your rights</h2>
+      <ul>
+        <li><strong>Access & edit</strong>: your profile and everything you've posted is visible inside the app.</li>
+        <li><strong>Deletion</strong>: Settings › Delete account deletes everything irreversibly.</li>
+        <li><strong>Revoke consent</strong>: turn off location sharing in your device settings at any time.</li>
+      </ul>
+
+      <h2>9. Children</h2>
+      <p>Qurb is not directed to anyone under 13. If we discover an underage account, we delete it immediately.</p>
+
+      <h2>10. Changes to this policy</h2>
+      <p>We may update this policy. For any material change we will update the "Last updated" date above and notify you inside the app when appropriate.</p>
+
+      <div class="contact">
+        <strong>Contact &amp; reporting:</strong>
+        Open the app › Settings › Report a problem, or email
+        <a href="mailto:privacy@qurb.app">privacy@qurb.app</a>.
+      </div>
+    </main>
+
+    <footer>
+      Qurb · قُرب &nbsp;·&nbsp; <a href="mailto:privacy@qurb.app">privacy@qurb.app</a>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var btnAr = document.getElementById('btn-ar');
+      var btnEn = document.getElementById('btn-en');
+      var docAr = document.getElementById('doc-ar');
+      var docEn = document.getElementById('doc-en');
+      var html = document.documentElement;
+
+      function show(lang) {
+        var isAr = lang === 'ar';
+        docAr.classList.toggle('active', isAr);
+        docEn.classList.toggle('active', !isAr);
+        btnAr.classList.toggle('active', isAr);
+        btnEn.classList.toggle('active', !isAr);
+        btnAr.setAttribute('aria-selected', isAr);
+        btnEn.setAttribute('aria-selected', !isAr);
+        html.setAttribute('lang', isAr ? 'ar' : 'en');
+        html.setAttribute('dir', isAr ? 'rtl' : 'ltr');
+        try { localStorage.setItem('qurb-lang', lang); } catch (e) {}
+        try {
+          var u = new URL(location.href);
+          u.searchParams.set('lang', lang);
+          history.replaceState(null, '', u);
+        } catch (e) {}
+      }
+
+      btnAr.addEventListener('click', function () { show('ar'); });
+      btnEn.addEventListener('click', function () { show('en'); });
+
+      // Initial language: ?lang= → localStorage → browser → ar
+      var params = new URLSearchParams(location.search);
+      var fromUrl = params.get('lang');
+      var stored = null;
+      try { stored = localStorage.getItem('qurb-lang'); } catch (e) {}
+      var initial = fromUrl || stored
+        || (navigator.language && navigator.language.toLowerCase().indexOf('en') === 0 ? 'en' : 'ar');
+      if (initial !== 'ar') show(initial);
+    })();
+  </script>
+</body>
+</html>
