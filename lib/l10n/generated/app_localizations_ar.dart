@@ -281,6 +281,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get comments_reply => 'ردّ';
 
   @override
+  String comments_replying_to(Object id) {
+    return 'ترد على #$id';
+  }
+
+  @override
+  String get comments_cancel_reply => 'إلغاء الرد';
+
+  @override
   String get whispers_header => 'همس';
 
   @override

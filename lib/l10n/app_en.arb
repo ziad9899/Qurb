@@ -99,6 +99,8 @@
   "comments_err_rateLimit": "Comment limit reached (50/hour).",
 "comments_err_generic": "Couldn't send",
   "comments_reply": "Reply",
+  "comments_replying_to": "Replying to #{id}",
+  "comments_cancel_reply": "Cancel reply",
 
   "whispers_header": "Whispers",
   "whispers_requests_label": "WHISPER REQUESTS",

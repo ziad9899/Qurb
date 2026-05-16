@@ -35,8 +35,16 @@ class CommentsScreen extends ConsumerStatefulWidget {
 
 class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   final _composer = TextEditingController();
+  final _composerFocus = FocusNode();
   bool _sending = false;
   RealtimeChannel? _commentsChannel;
+
+  // WhatsApp-style reply target: when the user taps "Reply" on a
+  // comment, the composer focuses, the keyboard opens, and a chip
+  // above the input shows who/what we're replying to.
+  int? _replyToId;
+  int? _replyToNumericId;
+  String? _replyToPreview;
 
   @override
   void initState() {
@@ -58,20 +66,41 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   void dispose() {
     _commentsChannel?.unsubscribe();
     _composer.dispose();
+    _composerFocus.dispose();
     super.dispose();
+  }
+
+  void _startReply(PostComment c) {
+    setState(() {
+      _replyToId = c.id;
+      _replyToNumericId = c.authorNumericId;
+      _replyToPreview = c.body;
+    });
+    _composerFocus.requestFocus();
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyToId = null;
+      _replyToNumericId = null;
+      _replyToPreview = null;
+    });
   }
 
   Future<void> _send() async {
     final body = _composer.text.trim();
     if (body.isEmpty || _sending) return;
     HapticFeedback.lightImpact();
+    final parentId = _replyToId;
     setState(() => _sending = true);
     try {
       await ref.read(postRepositoryProvider).createComment(
             postId: widget.postId,
+            parentId: parentId,
             body: body,
           );
       _composer.clear();
+      _cancelReply();
       ref.invalidate(commentsProvider(widget.postId));
     } catch (e) {
       HapticFeedback.heavyImpact();
@@ -153,6 +182,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                                 comment: c,
                                 votes: commentVotes.value ?? const {},
                                 shape: shape,
+                                onReply: _startReply,
                                 onVote: (cid, v) async {
                                   final wire = switch (v) {
                                     VoteValue.up => 1,
@@ -202,7 +232,16 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                       top: BorderSide(color: qurb.border, width: 0.5),
                     ),
                   ),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_replyToId != null)
+                        _ReplyChip(
+                          toNumericId: _replyToNumericId!,
+                          preview: _replyToPreview ?? '',
+                          onCancel: _cancelReply,
+                        ),
+                      Row(
                     children: [
                       Expanded(
                         child: Container(
@@ -216,6 +255,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                           ),
                           child: TextField(
                             controller: _composer,
+                            focusNode: _composerFocus,
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
                               hintText: t.comments_hint,
@@ -273,6 +313,8 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                                 ),
                         ),
                       ),
+                    ],
+                  ),
                     ],
                   ),
                 ),
@@ -634,12 +676,14 @@ class _CommentRow extends ConsumerStatefulWidget {
     required this.votes,
     required this.shape,
     required this.onVote,
+    required this.onReply,
     this.depth = 0,
   });
   final PostComment comment;
   final Map<String, int> votes;
   final IdBadgeShape shape;
   final Future<void> Function(int commentId, VoteValue? value) onVote;
+  final void Function(PostComment) onReply;
   final int depth;
   @override
   ConsumerState<_CommentRow> createState() => _CommentRowState();
@@ -698,21 +742,29 @@ class _CommentRowState extends ConsumerState<_CommentRow> {
                 },
               ),
               const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Row(
-                  children: [
-                    QurbIconWidget(
-                      QIcon.reply, size: 12, color: qurb.textFaint,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      t.comments_reply,
-                      style: TextStyle(
-                        fontSize: 11, color: qurb.textFaint,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  widget.onReply(c);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 6),
+                  child: Row(
+                    children: [
+                      QurbIconWidget(
+                        QIcon.reply, size: 12, color: qurb.textFaint,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        t.comments_reply,
+                        style: TextStyle(
+                          fontSize: 11, color: qurb.textFaint,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -723,6 +775,7 @@ class _CommentRowState extends ConsumerState<_CommentRow> {
               votes: widget.votes,
               shape: widget.shape,
               onVote: widget.onVote,
+              onReply: widget.onReply,
               depth: widget.depth + 1,
             ),
           if (widget.depth == 0)
@@ -776,6 +829,87 @@ class _HeroMenuItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// WhatsApp-style reply target indicator that lives directly above
+/// the composer when the user taps "Reply" on a comment. Shows the
+/// target's anonymous numeric id + a one-line preview, with an X to
+/// dismiss.
+class _ReplyChip extends StatelessWidget {
+  const _ReplyChip({
+    required this.toNumericId,
+    required this.preview,
+    required this.onCancel,
+  });
+  final int toNumericId;
+  final String preview;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: qurb.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: qurb.border, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 3, height: 28,
+            margin: const EdgeInsetsDirectional.only(end: 10),
+            decoration: BoxDecoration(
+              color: qurb.accent,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  t.comments_replying_to(toNumericId.toString()),
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: qurb.accent,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  preview,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12, color: qurb.textDim, height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Semantics(
+            label: t.comments_cancel_reply,
+            button: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onCancel,
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: QurbIconWidget(
+                  QIcon.close, size: 14, color: qurb.textFaint,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -96,6 +96,8 @@
   "comments_err_rateLimit": "وصلت لحدّ التعليقات (50/ساعة).",
 "comments_err_generic": "تعذّر الإرسال",
   "comments_reply": "ردّ",
+  "comments_replying_to": "ترد على #{id}",
+  "comments_cancel_reply": "إلغاء الرد",
 
   "whispers_header": "همس",
   "whispers_requests_label": "طلبات هَمس",

@@ -284,6 +284,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get comments_reply => 'Reply';
 
   @override
+  String comments_replying_to(Object id) {
+    return 'Replying to #$id';
+  }
+
+  @override
+  String get comments_cancel_reply => 'Cancel reply';
+
+  @override
   String get whispers_header => 'Whispers';
 
   @override

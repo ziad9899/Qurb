@@ -620,6 +620,18 @@ abstract class AppLocalizations {
   /// **'Reply'**
   String get comments_reply;
 
+  /// No description provided for @comments_replying_to.
+  ///
+  /// In en, this message translates to:
+  /// **'Replying to #{id}'**
+  String comments_replying_to(Object id);
+
+  /// No description provided for @comments_cancel_reply.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reply'**
+  String get comments_cancel_reply;
+
   /// No description provided for @whispers_header.
   ///
   /// In en, this message translates to:
