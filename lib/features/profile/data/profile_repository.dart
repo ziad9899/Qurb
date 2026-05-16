@@ -65,6 +65,11 @@ class ProfileRepository {
   Future<void> blockUserByPost(int postId) =>
       _client.rpc('block_user_by_post', params: {'p_post_id': postId});
 
+  Future<void> blockUserByNumericId(int numericId) => _client.rpc(
+        'block_user_by_numeric_id',
+        params: {'p_numeric_id': numericId},
+      );
+
   Future<void> unblockByNumericId(int numericId) => _client.rpc(
         'unblock_user_by_numeric_id',
         params: {'p_numeric_id': numericId},

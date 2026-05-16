@@ -1,0 +1,5 @@
+/* Display name in the English locale */
+"CFBundleDisplayName" = "Qurb";
+
+/* Location permission rationale shown by iOS the first time */
+"NSLocationWhenInUseUsageDescription" = "Qurb uses your location only to show what's happening near you. We never share your location with another user — it is stored as a 100m grid cell only.";

@@ -13,7 +13,7 @@ class ReportSheet extends ConsumerStatefulWidget {
     required this.targetType,
     required this.targetId,
   });
-  final String targetType; // 'post' | 'comment'
+  final String targetType; // 'post' | 'comment' | 'user' | 'message'
   final int targetId;
 
   static Future<bool?> show(
@@ -114,9 +114,12 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
               ),
               const SizedBox(height: 14),
               Text(
-                widget.targetType == 'comment'
-                    ? t.report_comment_title
-                    : t.report_post_title,
+                switch (widget.targetType) {
+                  'comment' => t.report_comment_title,
+                  'user' => t.report_user_title,
+                  'message' => t.report_message_title,
+                  _ => t.report_post_title,
+                },
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,

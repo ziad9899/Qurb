@@ -14,6 +14,8 @@ import '../../core/widgets/qurb_error.dart';
 import '../../core/widgets/qurb_icon.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../feed/report_sheet.dart';
+import '../profile/data/profile_providers.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 import 'data/whispers_models.dart';
 import 'data/whispers_providers.dart';
@@ -233,12 +235,107 @@ class _WhisperThreadScreenState
   }
 }
 
-class _ThreadHeader extends StatelessWidget {
+class _ThreadHeader extends ConsumerWidget {
   const _ThreadHeader({required this.numericId, required this.shape});
   final int? numericId;
   final IdBadgeShape shape;
+
+  void _openMenu(BuildContext context, WidgetRef ref) {
+    if (numericId == null) return;
+    final qurb = context.qurb;
+    final t = AppLocalizations.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => Container(
+        decoration: BoxDecoration(
+          color: qurb.bgElev,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: qurb.borderStrong,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _ThreadMenuItem(
+                  icon: QIcon.flag,
+                  label: t.thread_menu_report_user,
+                  onTap: () async {
+                    Navigator.of(sheetCtx).pop();
+                    await ReportSheet.show(
+                      context,
+                      targetType: 'user',
+                      targetId: numericId!,
+                    );
+                  },
+                ),
+                _ThreadMenuItem(
+                  icon: QIcon.block,
+                  label: t.thread_menu_block_user,
+                  color: qurb.danger,
+                  last: true,
+                  onTap: () async {
+                    Navigator.of(sheetCtx).pop();
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        backgroundColor: qurb.surface,
+                        title: Text(
+                          t.post_block_title(numericId.toString()),
+                          style: TextStyle(color: qurb.text),
+                        ),
+                        content: Text(
+                          t.post_block_body,
+                          style: TextStyle(
+                              color: qurb.textDim, height: 1.6),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).pop(false),
+                            child: Text(t.common_cancel,
+                                style: TextStyle(color: qurb.textDim)),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).pop(true),
+                            child: Text(t.post_block_action,
+                                style: TextStyle(color: qurb.danger)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (ok != true) return;
+                    try {
+                      await ref
+                          .read(profileRepositoryProvider)
+                          .blockUserByNumericId(numericId!);
+                      ref.invalidate(myBlocksProvider);
+                      if (context.mounted) Navigator.of(context).pop();
+                    } catch (_) {/* swallow — UI already returned */}
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final qurb = context.qurb;
     final media = MediaQuery.of(context);
     return ClipRect(
@@ -290,9 +387,63 @@ class _ThreadHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              QurbIconWidget(QIcon.more, size: 20, color: qurb.textDim),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _openMenu(context, ref),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: QurbIconWidget(
+                    QIcon.more, size: 20, color: qurb.textDim,
+                  ),
+                ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ThreadMenuItem extends StatelessWidget {
+  const _ThreadMenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+    this.last = false,
+  });
+  final QIcon icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+  final bool last;
+  @override
+  Widget build(BuildContext context) {
+    final qurb = context.qurb;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+        decoration: BoxDecoration(
+          border: last
+              ? null
+              : Border(bottom: BorderSide(color: qurb.border, width: 0.5)),
+        ),
+        child: Row(
+          children: [
+            QurbIconWidget(icon, size: 18, color: color ?? qurb.text),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: color ?? qurb.text,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

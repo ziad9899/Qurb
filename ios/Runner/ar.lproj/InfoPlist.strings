@@ -1,0 +1,5 @@
+/* Display name in the Arabic locale */
+"CFBundleDisplayName" = "قُرب";
+
+/* Location permission rationale shown by iOS the first time */
+"NSLocationWhenInUseUsageDescription" = "قُرب يستخدم موقعك لعرض ما يحدث قريباً منك فقط. لا نشارك موقعك مع أي مستخدم آخر — يُخزَّن على شكل خلية شبكية بدقة 100 متر.";

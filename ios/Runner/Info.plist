@@ -3,9 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ar</string>
+	</array>
 	<key>CFBundleDisplayName</key>
-	<string>Minto</string>
+	<string>Qurb</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -46,8 +51,6 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>قُرب يستخدم موقعك لعرض ما يحدث قريباً منك فقط. لا نشارك موقعك مع أي مستخدم آخر — يخزَّن على شكل خلية شبكية بدقة 100م فقط.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>قُرب يستخدم موقعك لعرض ما يحدث قريباً منك فقط. لا نشارك موقعك مع أي مستخدم آخر — يخزَّن على شكل خلية شبكية بدقة 100م فقط.</string>
+	<string>Qurb uses your location only to show what's happening near you. We never share your location with another user — it is stored as a 100m grid cell only.</string>
 </dict>
 </plist>

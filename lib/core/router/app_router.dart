@@ -8,6 +8,7 @@ import '../../features/feed/feed_screen.dart';
 import '../../features/legal/community_guidelines_screen.dart';
 import '../../features/legal/privacy_policy_screen.dart';
 import '../../features/legal/report_issue_screen.dart';
+import '../../features/legal/terms_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/settings/blocks_screen.dart';
@@ -103,6 +104,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'blocks',
             name: 'settings-blocks',
             builder: (_, __) => const BlocksScreen(),
+          ),
+          GoRoute(
+            path: 'terms',
+            name: 'settings-terms',
+            builder: (_, __) => const TermsScreen(),
           ),
           GoRoute(
             path: 'privacy',

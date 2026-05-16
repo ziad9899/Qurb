@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,9 +25,25 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     duration: const Duration(seconds: 2),
   )..repeat();
 
+  // Tap recognizers on the "Terms" / "Privacy" links shown above the CTA.
+  // Stored on State so they're disposed once — Text.rich rebuilds every
+  // frame, and recreating a recognizer per frame would leak.
+  late final TapGestureRecognizer _termsTap = TapGestureRecognizer()
+    ..onTap = () {
+      if (!mounted) return;
+      context.push('/settings/terms');
+    };
+  late final TapGestureRecognizer _privacyTap = TapGestureRecognizer()
+    ..onTap = () {
+      if (!mounted) return;
+      context.push('/settings/privacy');
+    };
+
   @override
   void dispose() {
     _pingC.dispose();
+    _termsTap.dispose();
+    _privacyTap.dispose();
     super.dispose();
   }
 
@@ -247,16 +264,18 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
           TextSpan(text: t.welcome_terms_prefix),
           TextSpan(
             text: t.welcome_terms_link,
+            recognizer: _termsTap,
             style: TextStyle(
-              color: qurb.textDim,
+              color: qurb.accent,
               decoration: TextDecoration.underline,
             ),
           ),
           TextSpan(text: t.welcome_terms_and),
           TextSpan(
             text: t.welcome_privacy_link,
+            recognizer: _privacyTap,
             style: TextStyle(
-              color: qurb.textDim,
+              color: qurb.accent,
               decoration: TextDecoration.underline,
             ),
           ),

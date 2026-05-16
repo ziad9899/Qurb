@@ -373,6 +373,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get thread_header_fallback => 'Whisper';
 
   @override
+  String get thread_menu_report_user => 'Report this user';
+
+  @override
+  String get thread_menu_block_user => 'Block this user';
+
+  @override
   String get notifs_title => 'Notifications';
 
   @override
@@ -646,6 +652,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your ID and all your posts, comments, and conversations will be removed. This can\'t be undone.';
 
   @override
+  String get settings_delete_err =>
+      'Couldn\'t delete account. Check your connection and try again.';
+
+  @override
   String get settings_lang_arabic => 'العربية';
 
   @override
@@ -672,6 +682,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get report_comment_title => 'Report comment';
+
+  @override
+  String get report_user_title => 'Report user';
+
+  @override
+  String get report_message_title => 'Report message';
 
   @override
   String get report_subtitle =>
@@ -731,6 +747,62 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get proximity_city => 'Riyadh';
+
+  @override
+  String get terms_title => 'Terms of Use';
+
+  @override
+  String get terms_intro =>
+      'By using Qurb you agree to these terms. Qurb is an anonymous, location-based chat service — following these rules is required to keep your account active.';
+
+  @override
+  String get terms_section_acceptance_h => '1. Acceptance';
+
+  @override
+  String get terms_section_acceptance_b =>
+      'By completing the welcome screen you confirm that you are 13 years of age or older, that you have read the Privacy Policy and Community Guidelines, and that you agree to be bound by them. If you do not agree, close the app and do not use it.';
+
+  @override
+  String get terms_section_anonymity_h => '2. Anonymous identity';
+
+  @override
+  String get terms_section_anonymity_b =>
+      'We do not ask for your name, email, or phone number. Your account is tied to this device only — if you lose or wipe it, you may not be able to recover access. Do not impersonate other users or claim to represent an official entity.';
+
+  @override
+  String get terms_section_content_h => '3. Your content';
+
+  @override
+  String get terms_section_content_b =>
+      'You are solely responsible for what you post. Your posts are shown to users geographically near you. Do not upload content owned by others without permission. You grant us a non-exclusive license to display what you post inside the app, solely to operate the service.';
+
+  @override
+  String get terms_section_conduct_h => '4. Prohibited conduct';
+
+  @override
+  String get terms_section_conduct_b =>
+      'Forbidden: profanity, threats, harassment, hate speech, sharing other people\'s private information (doxxing), explicit sexual content, advertising and fraud, impersonation, and any illegal activity. Violations result in content removal or account ban.';
+
+  @override
+  String get terms_section_termination_h => '5. Termination';
+
+  @override
+  String get terms_section_termination_b =>
+      'We may suspend or delete your account if you violate these terms. You may delete your account at any time from Settings › Delete Account — this permanently removes your posts, comments, and chats.';
+
+  @override
+  String get terms_section_disclaimer_h => '6. Disclaimer';
+
+  @override
+  String get terms_section_disclaimer_b =>
+      'The service is provided \"as is\" without warranty. We are not responsible for content posted by other users. Reliance on any information you see in the app is at your own risk.';
+
+  @override
+  String get terms_section_contact_h => '7. Contact';
+
+  @override
+  String get terms_section_contact_b =>
+      'Questions or to report a violation: Settings › Report a problem.';
 
   @override
   String get privacy_title => 'Privacy Policy';

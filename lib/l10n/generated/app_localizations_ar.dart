@@ -369,6 +369,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get thread_header_fallback => 'همس';
 
   @override
+  String get thread_menu_report_user => 'الإبلاغ عن هذا المستخدم';
+
+  @override
+  String get thread_menu_block_user => 'حظر هذا المستخدم';
+
+  @override
   String get notifs_title => 'الإشعارات';
 
   @override
@@ -638,6 +644,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'سيُحذف معرفك وكل منشوراتك وتعليقاتك ومحادثاتك. لا يمكن التراجع.';
 
   @override
+  String get settings_delete_err =>
+      'تعذّر حذف الحساب. تحقّق من اتصالك وحاول مجدداً.';
+
+  @override
   String get settings_lang_arabic => 'العربية';
 
   @override
@@ -663,6 +673,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get report_comment_title => 'الإبلاغ عن تعليق';
+
+  @override
+  String get report_user_title => 'الإبلاغ عن مستخدم';
+
+  @override
+  String get report_message_title => 'الإبلاغ عن رسالة';
 
   @override
   String get report_subtitle =>
@@ -721,6 +737,62 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get proximity_city => 'الرياض';
+
+  @override
+  String get terms_title => 'شروط الاستخدام';
+
+  @override
+  String get terms_intro =>
+      'باستخدامك تطبيق قُرب فإنك توافق على هذه الشروط. قُرب خدمة محادثة مجهولة قائمة على الموقع — التزامك بهذه القواعد ضروري لاستمرار حسابك.';
+
+  @override
+  String get terms_section_acceptance_h => '١. القبول';
+
+  @override
+  String get terms_section_acceptance_b =>
+      'بإكمال شاشة الترحيب تُؤكّد أن عمرك ١٣ سنة فأكثر، وأنك قرأت سياسة الخصوصية ومعايير المجتمع، وتقبل الالتزام بهما. إذا لم توافق، أغلق التطبيق ولا تستعمله.';
+
+  @override
+  String get terms_section_anonymity_h => '٢. الهوية المجهولة';
+
+  @override
+  String get terms_section_anonymity_b =>
+      'لا نطلب اسماً ولا بريداً ولا رقم هاتف. حسابك مربوط بهذا الجهاز فقط — إذا فقدته أو مسحت بياناته فقد لا تستطيع استرجاعه. لا تنتحل شخصية مستخدم آخر ولا تدّعي أنك جهة رسمية.';
+
+  @override
+  String get terms_section_content_h => '٣. المحتوى';
+
+  @override
+  String get terms_section_content_b =>
+      'أنت المسؤول الوحيد عمّا تنشره. منشوراتك تظهر للمستخدمين القريبين منك جغرافياً. لا ترفع محتوى مملوكاً لآخرين بدون إذنهم. تمنحنا ترخيصاً غير حصري لعرض ما تنشره داخل التطبيق فقط لتشغيل الخدمة.';
+
+  @override
+  String get terms_section_conduct_h => '٤. السلوك الممنوع';
+
+  @override
+  String get terms_section_conduct_b =>
+      'ممنوع: السباب، التهديد، التحرش، خطاب الكراهية، نشر معلومات خاصة لشخص آخر (doxxing)، المحتوى الجنسي الصريح، الإعلانات والاحتيال، انتحال الشخصيات، وأي نشاط غير قانوني. مخالفة هذه البنود تؤدي لإخفاء المحتوى أو حظر الحساب.';
+
+  @override
+  String get terms_section_termination_h => '٥. إنهاء الحساب';
+
+  @override
+  String get terms_section_termination_b =>
+      'يحق لنا تعليق أو حذف حسابك في حال مخالفة هذه الشروط. ويحق لك حذف حسابك متى أردت من «الإعدادات ‹ حذف الحساب» — وعندها تُحذَف منشوراتك وتعليقاتك ومحادثاتك بشكل دائم.';
+
+  @override
+  String get terms_section_disclaimer_h => '٦. إخلاء المسؤولية';
+
+  @override
+  String get terms_section_disclaimer_b =>
+      'نقدّم الخدمة «كما هي» بدون ضمانات. لسنا مسؤولين عن المحتوى الذي ينشره مستخدمون آخرون. اعتمادك على أي معلومة تظهر في التطبيق يكون على مسؤوليتك.';
+
+  @override
+  String get terms_section_contact_h => '٧. التواصل';
+
+  @override
+  String get terms_section_contact_b =>
+      'للاستفسارات أو الإبلاغ عن مخالفة: «الإعدادات ‹ الإبلاغ عن مشكلة».';
 
   @override
   String get privacy_title => 'سياسة الخصوصية';

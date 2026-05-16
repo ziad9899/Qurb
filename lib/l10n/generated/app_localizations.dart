@@ -782,6 +782,18 @@ abstract class AppLocalizations {
   /// **'Whisper'**
   String get thread_header_fallback;
 
+  /// No description provided for @thread_menu_report_user.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this user'**
+  String get thread_menu_report_user;
+
+  /// No description provided for @thread_menu_block_user.
+  ///
+  /// In en, this message translates to:
+  /// **'Block this user'**
+  String get thread_menu_block_user;
+
   /// No description provided for @notifs_title.
   ///
   /// In en, this message translates to:
@@ -1268,6 +1280,12 @@ abstract class AppLocalizations {
   /// **'Your ID and all your posts, comments, and conversations will be removed. This can\'t be undone.'**
   String get settings_delete_body;
 
+  /// No description provided for @settings_delete_err.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete account. Check your connection and try again.'**
+  String get settings_delete_err;
+
   /// No description provided for @settings_lang_arabic.
   ///
   /// In en, this message translates to:
@@ -1321,6 +1339,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Report comment'**
   String get report_comment_title;
+
+  /// No description provided for @report_user_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Report user'**
+  String get report_user_title;
+
+  /// No description provided for @report_message_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Report message'**
+  String get report_message_title;
 
   /// No description provided for @report_subtitle.
   ///
@@ -1435,6 +1465,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Riyadh'**
   String get proximity_city;
+
+  /// No description provided for @terms_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use'**
+  String get terms_title;
+
+  /// No description provided for @terms_intro.
+  ///
+  /// In en, this message translates to:
+  /// **'By using Qurb you agree to these terms. Qurb is an anonymous, location-based chat service — following these rules is required to keep your account active.'**
+  String get terms_intro;
+
+  /// No description provided for @terms_section_acceptance_h.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Acceptance'**
+  String get terms_section_acceptance_h;
+
+  /// No description provided for @terms_section_acceptance_b.
+  ///
+  /// In en, this message translates to:
+  /// **'By completing the welcome screen you confirm that you are 13 years of age or older, that you have read the Privacy Policy and Community Guidelines, and that you agree to be bound by them. If you do not agree, close the app and do not use it.'**
+  String get terms_section_acceptance_b;
+
+  /// No description provided for @terms_section_anonymity_h.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Anonymous identity'**
+  String get terms_section_anonymity_h;
+
+  /// No description provided for @terms_section_anonymity_b.
+  ///
+  /// In en, this message translates to:
+  /// **'We do not ask for your name, email, or phone number. Your account is tied to this device only — if you lose or wipe it, you may not be able to recover access. Do not impersonate other users or claim to represent an official entity.'**
+  String get terms_section_anonymity_b;
+
+  /// No description provided for @terms_section_content_h.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Your content'**
+  String get terms_section_content_h;
+
+  /// No description provided for @terms_section_content_b.
+  ///
+  /// In en, this message translates to:
+  /// **'You are solely responsible for what you post. Your posts are shown to users geographically near you. Do not upload content owned by others without permission. You grant us a non-exclusive license to display what you post inside the app, solely to operate the service.'**
+  String get terms_section_content_b;
+
+  /// No description provided for @terms_section_conduct_h.
+  ///
+  /// In en, this message translates to:
+  /// **'4. Prohibited conduct'**
+  String get terms_section_conduct_h;
+
+  /// No description provided for @terms_section_conduct_b.
+  ///
+  /// In en, this message translates to:
+  /// **'Forbidden: profanity, threats, harassment, hate speech, sharing other people\'s private information (doxxing), explicit sexual content, advertising and fraud, impersonation, and any illegal activity. Violations result in content removal or account ban.'**
+  String get terms_section_conduct_b;
+
+  /// No description provided for @terms_section_termination_h.
+  ///
+  /// In en, this message translates to:
+  /// **'5. Termination'**
+  String get terms_section_termination_h;
+
+  /// No description provided for @terms_section_termination_b.
+  ///
+  /// In en, this message translates to:
+  /// **'We may suspend or delete your account if you violate these terms. You may delete your account at any time from Settings › Delete Account — this permanently removes your posts, comments, and chats.'**
+  String get terms_section_termination_b;
+
+  /// No description provided for @terms_section_disclaimer_h.
+  ///
+  /// In en, this message translates to:
+  /// **'6. Disclaimer'**
+  String get terms_section_disclaimer_h;
+
+  /// No description provided for @terms_section_disclaimer_b.
+  ///
+  /// In en, this message translates to:
+  /// **'The service is provided \"as is\" without warranty. We are not responsible for content posted by other users. Reliance on any information you see in the app is at your own risk.'**
+  String get terms_section_disclaimer_b;
+
+  /// No description provided for @terms_section_contact_h.
+  ///
+  /// In en, this message translates to:
+  /// **'7. Contact'**
+  String get terms_section_contact_h;
+
+  /// No description provided for @terms_section_contact_b.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions or to report a violation: Settings › Report a problem.'**
+  String get terms_section_contact_b;
 
   /// No description provided for @privacy_title.
   ///

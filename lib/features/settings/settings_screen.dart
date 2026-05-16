@@ -216,6 +216,12 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () => _showLanguageSheet(context, ref),
                   ),
                   _Row(
+                    icon: QIcon.shield,
+                    label: t.terms_title,
+                    onTap: () =>
+                        GoRouter.of(context).push('/settings/terms'),
+                  ),
+                  _Row(
                     icon: QIcon.lock,
                     label: t.privacy_title,
                     onTap: () =>
@@ -368,7 +374,16 @@ class SettingsScreen extends ConsumerWidget {
       await ref.read(profileRepositoryProvider).deleteMyAccount();
       await ref.read(authRepositoryProvider).signOut();
       if (context.mounted) GoRouter.of(context).go('/welcome');
-    } catch (_) {/* ignore */}
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t.settings_delete_err),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
   }
 }
 
