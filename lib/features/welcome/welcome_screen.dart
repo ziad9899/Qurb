@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/qurb_theme.dart';
+import '../../core/widgets/qurb_icon.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 /// Welcome — first run, no session yet. Tap "أنشئ معرفي" to call
@@ -19,6 +20,7 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     with SingleTickerProviderStateMixin {
   bool _generating = false;
+  bool _ageConfirmed = false;
   String? _error;
   late final AnimationController _pingC = AnimationController(
     vsync: this,
@@ -48,7 +50,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   }
 
   Future<void> _generate() async {
-    if (_generating) return;
+    if (_generating || !_ageConfirmed) return;
     setState(() {
       _generating = true;
       _error = null;
@@ -143,6 +145,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                     ),
                     const SizedBox(height: 10),
                   ],
+                  _ageGate(qurb, t),
+                  const SizedBox(height: 14),
                   _primaryButton(qurb, t),
                   const SizedBox(height: 14),
                   _termsLine(qurb, t),
@@ -217,11 +221,63 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     );
   }
 
+  Widget _ageGate(QurbColors qurb, AppLocalizations t) {
+    return Semantics(
+      label: t.welcome_age_confirm,
+      checked: _ageConfirmed,
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => setState(() => _ageConfirmed = !_ageConfirmed),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 20, height: 20,
+                margin: const EdgeInsetsDirectional.only(top: 1, end: 10),
+                decoration: BoxDecoration(
+                  color: _ageConfirmed ? qurb.accent : Colors.transparent,
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(
+                    color: _ageConfirmed ? qurb.accent : qurb.borderStrong,
+                    width: 1.5,
+                  ),
+                ),
+                child: _ageConfirmed
+                    ? const Center(
+                        child: QurbIconWidget(
+                          QIcon.check,
+                          size: 13,
+                          color: Color(0xFF1A1300),
+                        ),
+                      )
+                    : null,
+              ),
+              Expanded(
+                child: Text(
+                  t.welcome_age_confirm,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: qurb.textDim,
+                    height: 1.55,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _primaryButton(QurbColors qurb, AppLocalizations t) {
     return SizedBox(
       height: 56,
       child: ElevatedButton(
-        onPressed: _generating ? null : _generate,
+        onPressed: (_generating || !_ageConfirmed) ? null : _generate,
         style: ElevatedButton.styleFrom(
           backgroundColor: qurb.accent,
           foregroundColor: const Color(0xFFFFFFFF),

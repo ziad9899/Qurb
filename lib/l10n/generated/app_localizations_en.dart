@@ -58,6 +58,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcome_cta_generate => 'Generate my ID';
 
   @override
+  String get welcome_age_confirm =>
+      'I confirm I am 13 years of age or older, and I agree to the Terms of Use and Community Guidelines.';
+
+  @override
   String get welcome_terms_prefix => 'By continuing you accept the ';
 
   @override
@@ -612,6 +616,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String settings_row_blocklist_count(int count) {
     return '$count blocked';
   }
+
+  @override
+  String get settings_row_demoLocation => 'Demo location (Store review)';
+
+  @override
+  String get settings_row_demoLocation_detail =>
+      'Pins the location to Riyadh so reviewers see a populated feed. Turn on during App Store / Play review.';
 
   @override
   String get settings_row_nightMode => 'Night mode';

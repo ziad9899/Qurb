@@ -59,6 +59,10 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
   Future<void> _submit() async {
     if (_reason == null || _busy) return;
     HapticFeedback.lightImpact();
+    // Capture the localizations *before* the await — using context after
+    // an async gap risks a "deactivated widget" lookup when the sheet
+    // closes mid-flight.
+    final t = AppLocalizations.of(context);
     setState(() {
       _busy = true;
       _error = null;
@@ -72,7 +76,6 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
       HapticFeedback.mediumImpact();
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      final t = AppLocalizations.of(context);
       setState(() {
         _error = e.toString().contains('rate_limit')
             ? t.report_err_rateLimit

@@ -103,3 +103,9 @@ final pulseNotifsProvider =
           read: (r) => r.readPulseNotifs(),
           write: (r, v) => r.writePulseNotifs(v),
         ));
+
+final demoLocationProvider =
+    NotifierProvider<_BoolPrefController, bool>(() => _BoolPrefController(
+          read: (r) => r.readDemoLocation(),
+          write: (r, v) => r.writeDemoLocation(v),
+        ));

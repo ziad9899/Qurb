@@ -194,6 +194,12 @@ abstract class AppLocalizations {
   /// **'Generate my ID'**
   String get welcome_cta_generate;
 
+  /// No description provided for @welcome_age_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'I confirm I am 13 years of age or older, and I agree to the Terms of Use and Community Guidelines.'**
+  String get welcome_age_confirm;
+
   /// No description provided for @welcome_terms_prefix.
   ///
   /// In en, this message translates to:
@@ -1207,6 +1213,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} blocked'**
   String settings_row_blocklist_count(int count);
+
+  /// No description provided for @settings_row_demoLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo location (Store review)'**
+  String get settings_row_demoLocation;
+
+  /// No description provided for @settings_row_demoLocation_detail.
+  ///
+  /// In en, this message translates to:
+  /// **'Pins the location to Riyadh so reviewers see a populated feed. Turn on during App Store / Play review.'**
+  String get settings_row_demoLocation_detail;
 
   /// No description provided for @settings_row_nightMode.
   ///

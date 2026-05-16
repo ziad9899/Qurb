@@ -15,6 +15,7 @@ class PrefsRepository {
   static const _kReadReceipts = 'pref.readReceipts';
   static const _kAllNotifs = 'pref.allNotifs';
   static const _kPulseNotifs = 'pref.pulseNotifs';
+  static const _kDemoLocation = 'pref.demoLocation';
 
   // locale: 'ar' | 'en' | null (= system)
   String? readLocale() => _prefs.getString(_kLocale);
@@ -45,4 +46,14 @@ class PrefsRepository {
 
   bool readPulseNotifs() => _prefs.getBool(_kPulseNotifs) ?? true;
   Future<void> writePulseNotifs(bool v) => _prefs.setBool(_kPulseNotifs, v);
+
+  /// Apple reviewers test from Cupertino, CA and would see an empty feed
+  /// because all our seed data is geographically anchored to Saudi cities.
+  /// When `demoLocation` is true, [LocationRepository.acquireAndSync] reports
+  /// a fixed Riyadh coordinate (24.7136, 46.6753) instead of reading GPS, so
+  /// the review session reaches a populated feed. Documented in
+  /// docs/REVIEWER_NOTES.md.
+  bool readDemoLocation() => _prefs.getBool(_kDemoLocation) ?? false;
+  Future<void> writeDemoLocation(bool v) =>
+      _prefs.setBool(_kDemoLocation, v);
 }

@@ -57,6 +57,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get welcome_cta_generate => 'ولّد معرّفي';
 
   @override
+  String get welcome_age_confirm =>
+      'أؤكد أن عمري ١٣ سنة فأكثر، وأوافق على شروط الاستخدام ومعايير المجتمع.';
+
+  @override
   String get welcome_terms_prefix => 'بمتابعتك توافق على ';
 
   @override
@@ -605,6 +609,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String settings_row_blocklist_count(int count) {
     return '$count معرف محظور';
   }
+
+  @override
+  String get settings_row_demoLocation => 'موقع تجريبي (مراجعة المتجر)';
+
+  @override
+  String get settings_row_demoLocation_detail =>
+      'يثبّت الموقع على الرياض لتجربة المحتوى عند المراجعة. يُفعَّل عند مراجعة App Store/Play.';
 
   @override
   String get settings_row_nightMode => 'الوضع الليلي';

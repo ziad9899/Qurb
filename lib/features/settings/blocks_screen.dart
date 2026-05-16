@@ -107,7 +107,7 @@ class BlocksScreen extends ConsumerWidget {
                               ),
                               child: Text(
                                 t.blocks_unblock,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 12, fontWeight: FontWeight.w600,
                                 ),
                               ),

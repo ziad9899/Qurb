@@ -29,6 +29,7 @@ class SettingsScreen extends ConsumerWidget {
     final readReceipts = ref.watch(readReceiptsProvider);
     final allNotifs = ref.watch(allNotifsProvider);
     final pulseNotifs = ref.watch(pulseNotifsProvider);
+    final demoLocation = ref.watch(demoLocationProvider);
     final locale = ref.watch(localeProvider);
     final isArabic = (locale?.languageCode ?? 'ar') == 'ar';
 
@@ -157,6 +158,14 @@ class SettingsScreen extends ConsumerWidget {
                       orElse: () => '...',
                     ),
                     onTap: () => GoRouter.of(context).push('/settings/blocks'),
+                  ),
+                  _Row(
+                    icon: QIcon.pin,
+                    label: t.settings_row_demoLocation,
+                    detail: t.settings_row_demoLocation_detail,
+                    toggle: demoLocation,
+                    onToggle: (v) =>
+                        ref.read(demoLocationProvider.notifier).set(v),
                     last: true,
                   ),
                 ]),

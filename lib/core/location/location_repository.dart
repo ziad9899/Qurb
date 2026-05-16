@@ -67,6 +67,21 @@ class LocationRepository {
     }
   }
 
+  /// Bypasses GPS and pushes a fixed coordinate to `set_my_location`.
+  /// Used by the demo-location override (Settings) so Apple reviewers
+  /// in Cupertino reach a populated Saudi feed without granting GPS.
+  Future<LocationResult> setManualLocation(double lat, double lng) async {
+    try {
+      await _client.rpc('set_my_location', params: {
+        'p_lat': lat,
+        'p_lng': lng,
+      });
+      return LocationOk(lat, lng);
+    } catch (e) {
+      return LocationUnavailable(e.toString());
+    }
+  }
+
   /// Reads only — no permission prompt. Returns null if not yet granted.
   Future<({double lat, double lng})?> peekCurrent() async {
     final perm = await Geolocator.checkPermission();
