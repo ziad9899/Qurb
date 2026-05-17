@@ -94,6 +94,10 @@ class PostRepository {
     required Proximity proximity,
     double? lat,
     double? lng,
+    String? imagePath,
+    int? imageWidth,
+    int? imageHeight,
+    int? imageBytes,
   }) async {
     final id = await _client.rpc(
       'create_post',
@@ -103,6 +107,10 @@ class PostRepository {
         'p_proximity': proximityToWire(proximity),
         'p_lat': lat,
         'p_lng': lng,
+        'p_image_path': imagePath,
+        'p_img_width': imageWidth,
+        'p_img_height': imageHeight,
+        'p_img_bytes': imageBytes,
       },
     );
     return (id as num).toInt();

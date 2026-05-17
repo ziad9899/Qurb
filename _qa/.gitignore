@@ -6,4 +6,6 @@ deploy_*.ps1
 prepare_*.ps1
 setup_*.ps1
 fix_*.ps1
+test_*.ps1
+harden_*.ps1
 *.json

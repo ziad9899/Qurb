@@ -7,13 +7,26 @@
         * INTERNET — Supabase REST + Realtime.
         * ACCESS_NETWORK_STATE — lets the app detect offline state
           before showing "couldn't load" UI.
-      We intentionally do NOT request background location, camera,
-      microphone, contacts, or notifications at this stage.
+        * CAMERA — needed by image_picker when the user taps the
+          camera icon to take a photo for a post. Optional from the
+          user's perspective; the photo button is opt-in.
+        * READ_MEDIA_IMAGES (Android 13+, API 33) — needed by
+          image_picker to read a selected photo from the gallery.
+          Replaces the legacy READ_EXTERNAL_STORAGE for images.
+        * READ_EXTERNAL_STORAGE (Android <=12, API 32) — fallback
+          for the older gallery API on pre-13 devices.
+      We still do NOT request microphone, contacts, background
+      location, or notifications at this stage.
     -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
 
     <!-- Mark location as not required so the app still installs on
          tablets without GPS hardware (foreground feed still works

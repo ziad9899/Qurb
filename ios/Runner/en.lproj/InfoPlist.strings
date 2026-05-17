@@ -3,3 +3,9 @@
 
 /* Location permission rationale shown by iOS the first time */
 "NSLocationWhenInUseUsageDescription" = "Qurb uses your location only to show what's happening near you. We never share your location with another user — it is stored as a 100m grid cell only.";
+
+/* Camera permission rationale */
+"NSCameraUsageDescription" = "Qurb uses the camera so you can take a photo to attach to your post. Photos are never shared with other apps and you can edit or skip them.";
+
+/* Photo library read permission rationale */
+"NSPhotoLibraryUsageDescription" = "Qurb needs read access to your photo library so you can pick an image to attach to a post. We only read the photo you pick.";

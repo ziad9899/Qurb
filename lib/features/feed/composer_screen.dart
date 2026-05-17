@@ -12,6 +12,8 @@ import '../../core/widgets/qurb_icon.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
 import 'data/feed_providers.dart';
+import 'images/image_attachment_flow.dart';
+import 'images/image_pipeline.dart';
 
 // Tag ordering. Labels come from AppLocalizations.compose_tag_* at render
 // time so they switch language with the rest of the UI; this list pins the
@@ -42,6 +44,11 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
   String? _error;
   static const _max = 500;
 
+  /// Optional photo attachment. Null until the user runs the image
+  /// attachment flow at least once. Cleared when they tap the X
+  /// on the preview thumbnail or after a successful publish.
+  ProcessedImage? _draftImage;
+
   @override
   void dispose() {
     _controller.dispose();
@@ -66,12 +73,27 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
         await ref.read(myLocationProvider.notifier).acquire();
         coords = latLngFrom(ref.read(myLocationProvider));
       }
+
+      // If the user attached an image, upload it FIRST. We do this
+      // before create_post so the storage object exists by the time
+      // the RPC verifies ownership. If upload fails the post is
+      // never created — no orphan rows.
+      String? imagePath;
+      int? imageBytes;
+      if (_draftImage != null) {
+        final pipeline = ref.read(imagePipelineProvider);
+        imagePath = await pipeline.upload(_draftImage!);
+        imageBytes = _draftImage!.byteSize;
+      }
+
       await ref.read(postRepositoryProvider).createPost(
             body: body,
             tag: _tag,
             proximity: _scope,
             lat: coords?.lat,
             lng: coords?.lng,
+            imagePath: imagePath,
+            imageBytes: imageBytes,
           );
       ref.invalidate(feedPostsProvider);
       HapticFeedback.mediumImpact();
@@ -82,6 +104,60 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _attachImage() async {
+    if (_busy) return;
+    // PDPL consent: shown once before the first image attachment.
+    // The flag lives in SharedPreferences in a follow-up; for MVP we
+    // surface the disclosure every time inside a non-blocking sheet
+    // before opening the picker. Tapping "Continue" proceeds; "Cancel"
+    // backs out without any picker permission prompt firing.
+    final consented = await _showConsentSheet();
+    if (consented != true || !mounted) return;
+
+    final result = await runImageAttachmentFlow(context: context, ref: ref);
+    if (!mounted || result == null) return;
+    setState(() => _draftImage = result);
+  }
+
+  Future<bool?> _showConsentSheet() {
+    return showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'مشاركة صورة',
+                style: Theme.of(ctx).textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'بالاستمرار، أنت تؤكد أنك تملك حقوق هذه الصورة ولديك إذن '
+                'بمشاركتها. نحذف بيانات الموقع (GPS) تلقائياً قبل الرفع.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('متابعة'),
+              ),
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('إلغاء'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   String _humanizeError(String s) {
@@ -311,9 +387,25 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                   ),
                   child: Row(
                     children: [
-                      const _IconButtonSquare(icon: QIcon.image),
+                      _ActionIconSquare(
+                        icon: QIcon.image,
+                        enabled: _draftImage == null && !_busy,
+                        onTap: _attachImage,
+                      ),
                       const SizedBox(width: 12),
-                      const _IconButtonSquare(icon: QIcon.camera),
+                      _ActionIconSquare(
+                        icon: QIcon.camera,
+                        enabled: _draftImage == null && !_busy,
+                        onTap: _attachImage,
+                      ),
+                      if (_draftImage != null) ...[
+                        const SizedBox(width: 12),
+                        _DraftImageChip(
+                          image: _draftImage!,
+                          onRemove: () =>
+                              setState(() => _draftImage = null),
+                        ),
+                      ],
                       const Spacer(),
                       if (_error != null) ...[
                         Expanded(
@@ -397,21 +489,79 @@ class _ScopeTile extends StatelessWidget {
   }
 }
 
-class _IconButtonSquare extends StatelessWidget {
-  const _IconButtonSquare({required this.icon});
+/// Small chip in the composer footer that previews the attached
+/// photo (40×40 rounded thumbnail) with an X to remove it.
+class _DraftImageChip extends StatelessWidget {
+  const _DraftImageChip({required this.image, required this.onRemove});
+  final ProcessedImage image;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.memory(
+            image.bytes,
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+          ),
+        ),
+        Positioned(
+          right: -6,
+          top: -6,
+          child: GestureDetector(
+            onTap: onRemove,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: const BoxDecoration(
+                color: Colors.black87,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, size: 12, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Tappable variant of [_IconButtonSquare]. When [enabled] is false the
+/// icon is dimmed and taps are absorbed. Used by the composer to wire
+/// the image / camera buttons to the attachment flow.
+class _ActionIconSquare extends StatelessWidget {
+  const _ActionIconSquare({
+    required this.icon,
+    required this.onTap,
+    this.enabled = true,
+  });
   final QIcon icon;
+  final VoidCallback onTap;
+  final bool enabled;
   @override
   Widget build(BuildContext context) {
     final qurb = context.qurb;
-    return Container(
-      width: 36, height: 36,
-      decoration: BoxDecoration(
-        color: qurb.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: qurb.border, width: 0.5),
-      ),
-      child: Center(
-        child: QurbIconWidget(icon, size: 18, color: qurb.text),
+    return Opacity(
+      opacity: enabled ? 1 : 0.4,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: qurb.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: qurb.border, width: 0.5),
+          ),
+          child: Center(
+            child: QurbIconWidget(icon, size: 18, color: qurb.text),
+          ),
+        ),
       ),
     );
   }

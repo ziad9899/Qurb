@@ -30,6 +30,22 @@ dependencies:
 
   geolocator: ^13.0.2
 
+  # Image attachment pipeline (Phase 10).
+  # image_picker: official, handles camera + gallery on iOS/Android.
+  # pro_image_editor: native Flutter widget for Snapchat-style
+  #   annotation (pen, text, crop, stickers). Single-maintainer
+  #   but actively released monthly as of late 2025.
+  # flutter_image_compress: forces re-encode so all EXIF (incl. GPS)
+  #   is stripped before upload.
+  # cached_network_image: in-memory + on-disk LRU cache for the
+  #   signed-URL post images we render in the feed.
+  image_picker: ^1.1.2
+  # Pinned to <11.4 — Flutter 3.35 required from 11.4 onward, we're
+  # on 3.32. Upgrade the constraint when the Flutter SDK gets bumped.
+  pro_image_editor: ">=11.3.0 <11.4.0"
+  flutter_image_compress: ^2.3.0
+  cached_network_image: ^3.4.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

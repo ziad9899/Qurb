@@ -70,6 +70,23 @@
         <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
       </array>
     </dict>
+    <!-- Photos / videos: optional image attachments on posts. The
+         user chooses to take/pick a single photo per post. We strip
+         EXIF (including GPS) before upload, so the bytes carry no
+         location data. Linked to the anonymous user, used only for
+         the app's social-feed functionality. -->
+    <dict>
+      <key>NSPrivacyCollectedDataType</key>
+      <string>NSPrivacyCollectedDataTypePhotosOrVideos</string>
+      <key>NSPrivacyCollectedDataTypeLinked</key>
+      <true/>
+      <key>NSPrivacyCollectedDataTypeTracking</key>
+      <false/>
+      <key>NSPrivacyCollectedDataTypePurposes</key>
+      <array>
+        <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+      </array>
+    </dict>
   </array>
   <key>NSPrivacyAccessedAPITypes</key>
   <array>

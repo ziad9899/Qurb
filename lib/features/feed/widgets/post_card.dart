@@ -16,6 +16,7 @@ import '../../showcase/design_showcase_screen.dart' show idShapeProvider;
 import '../data/feed_providers.dart';
 import '../data/post.dart';
 import '../edit_post_sheet.dart';
+import '../images/post_image_view.dart';
 import '../report_sheet.dart';
 
 class PostCard extends ConsumerStatefulWidget {
@@ -375,20 +376,14 @@ class _PostCardState extends ConsumerState<PostCard> {
               height: 1.75,
             ),
           ),
-          if (p.hasImage) ...[
+          if (p.hasImage && p.imagePath != null) ...[
             const SizedBox(height: 12),
-            Container(
-              height: 180,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    qurb.gold.withValues(alpha: 0.45),
-                    qurb.accent.withValues(alpha: 0.40),
-                  ],
-                ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: PostImageView(
+                storagePath: p.imagePath!,
+                // 9:16 portrait, sized to feed-card width
+                aspectRatio: 9 / 16,
               ),
             ),
           ],

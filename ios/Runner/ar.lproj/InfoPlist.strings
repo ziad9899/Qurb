@@ -3,3 +3,9 @@
 
 /* Location permission rationale shown by iOS the first time */
 "NSLocationWhenInUseUsageDescription" = "قُرب يستخدم موقعك لعرض ما يحدث قريباً منك فقط. لا نشارك موقعك مع أي مستخدم آخر — يُخزَّن على شكل خلية شبكية بدقة 100 متر.";
+
+/* Camera permission rationale */
+"NSCameraUsageDescription" = "يستخدم قُرب الكاميرا حتى تستطيع التقاط صورة لإرفاقها بمنشورك. لا يتم مشاركة الصور مع أي تطبيق آخر، ويمكنك تعديلها أو تخطيها.";
+
+/* Photo library read permission rationale */
+"NSPhotoLibraryUsageDescription" = "يحتاج قُرب إذناً لقراءة معرض الصور لتختار صورة ترفقها بالمنشور. نقرأ الصورة التي تختارها فقط.";

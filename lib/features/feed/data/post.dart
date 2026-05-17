@@ -13,6 +13,7 @@ class Post extends Equatable {
     required this.score,
     required this.commentsCount,
     required this.hasImage,
+    this.imagePath,
     required this.createdAt,
   });
 
@@ -24,6 +25,10 @@ class Post extends Equatable {
   final int score;
   final int commentsCount;
   final bool hasImage;
+  /// Storage path inside the `post-images` bucket. Null for text-only
+  /// posts. The client signs this on demand via createSignedUrl() —
+  /// we never store URLs because they expire.
+  final String? imagePath;
   final DateTime createdAt;
 
   int get minutesAgo => DateTime.now().difference(createdAt).inMinutes;
@@ -37,12 +42,23 @@ class Post extends Equatable {
         score: (m['score'] as num?)?.toInt() ?? 0,
         commentsCount: (m['comments_count'] as num?)?.toInt() ?? 0,
         hasImage: m['has_image'] as bool? ?? false,
+        imagePath: m['image_path'] as String?,
         createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
       );
 
   @override
-  List<Object?> get props =>
-      [id, authorNumericId, body, tag, proximity, score, commentsCount, hasImage, createdAt];
+  List<Object?> get props => [
+        id,
+        authorNumericId,
+        body,
+        tag,
+        proximity,
+        score,
+        commentsCount,
+        hasImage,
+        imagePath,
+        createdAt,
+      ];
 }
 
 Proximity _proximityFrom(String s) {
