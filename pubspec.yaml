@@ -5,7 +5,7 @@ version: 0.1.0+1
 
 environment:
   sdk: ^3.8.0
-  flutter: ">=3.32.0"
+  flutter: ">=3.35.0"
 
 dependencies:
   flutter:
@@ -40,9 +40,7 @@ dependencies:
   # cached_network_image: in-memory + on-disk LRU cache for the
   #   signed-URL post images we render in the feed.
   image_picker: ^1.1.2
-  # Pinned to <11.4 — Flutter 3.35 required from 11.4 onward, we're
-  # on 3.32. Upgrade the constraint when the Flutter SDK gets bumped.
-  pro_image_editor: ">=11.3.0 <11.4.0"
+  pro_image_editor: ^11.15.2
   flutter_image_compress: ^2.3.0
   cached_network_image: ^3.4.1
 
