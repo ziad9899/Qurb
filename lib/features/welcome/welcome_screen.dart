@@ -2,12 +2,19 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/auth/auth_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/qurb_theme.dart';
 import '../../core/widgets/qurb_icon.dart';
 import '../../l10n/generated/app_localizations.dart';
+
+// Public privacy policy is hosted on GitHub Pages so legal review
+// (Apple, PDPL) can audit the canonical wording without needing the
+// app build. `?lang=...` is honored by the page's client-side i18n.
+const _privacyPolicyBaseUrl =
+    'https://ziad9899.github.io/Qurb/privacy.html';
 
 /// Welcome — first run, no session yet. Tap "أنشئ معرفي" to call
 /// signInAnonymously(), then route to /welcome/generated for the reveal.
@@ -36,10 +43,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       context.push('/settings/terms');
     };
   late final TapGestureRecognizer _privacyTap = TapGestureRecognizer()
-    ..onTap = () {
-      if (!mounted) return;
-      context.push('/settings/privacy');
-    };
+    ..onTap = _openPrivacyPolicy;
 
   @override
   void dispose() {
@@ -47,6 +51,20 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     _termsTap.dispose();
     _privacyTap.dispose();
     super.dispose();
+  }
+
+  Future<void> _openPrivacyPolicy() async {
+    if (!mounted) return;
+    final lang = Localizations.localeOf(context).languageCode;
+    final url = Uri.parse('$_privacyPolicyBaseUrl?lang=$lang');
+    // externalApplication => system browser (Safari/Chrome), which is
+    // what Apple expects for a publicly hosted policy.
+    final ok = await launchUrl(url, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).compose_err_generic)),
+      );
+    }
   }
 
   Future<void> _generate() async {

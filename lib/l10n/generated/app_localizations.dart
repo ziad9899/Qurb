@@ -197,7 +197,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcome_age_confirm.
   ///
   /// In en, this message translates to:
-  /// **'I confirm I am 13 years of age or older, and I agree to the Terms of Use and Community Guidelines.'**
+  /// **'I confirm I am 18 years of age or older, and I agree to the Terms of Use and Community Guidelines.'**
   String get welcome_age_confirm;
 
   /// No description provided for @welcome_terms_prefix.
@@ -1517,7 +1517,7 @@ abstract class AppLocalizations {
   /// No description provided for @terms_section_acceptance_b.
   ///
   /// In en, this message translates to:
-  /// **'By completing the welcome screen you confirm that you are 13 years of age or older, that you have read the Privacy Policy and Community Guidelines, and that you agree to be bound by them. If you do not agree, close the app and do not use it.'**
+  /// **'By completing the welcome screen you confirm that you are 18 years of age or older, that you have read the Privacy Policy and Community Guidelines, and that you agree to be bound by them. If you do not agree, close the app and do not use it.'**
   String get terms_section_acceptance_b;
 
   /// No description provided for @terms_section_anonymity_h.

@@ -58,7 +58,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get welcome_age_confirm =>
-      'أؤكد أن عمري ١٣ سنة فأكثر، وأوافق على شروط الاستخدام ومعايير المجتمع.';
+      'أؤكد أن عمري ١٨ سنة فأكثر، وأوافق على شروط الاستخدام ومعايير المجتمع.';
 
   @override
   String get welcome_terms_prefix => 'بمتابعتك توافق على ';
@@ -767,7 +767,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get terms_section_acceptance_b =>
-      'بإكمال شاشة الترحيب تُؤكّد أن عمرك ١٣ سنة فأكثر، وأنك قرأت سياسة الخصوصية ومعايير المجتمع، وتقبل الالتزام بهما. إذا لم توافق، أغلق التطبيق ولا تستعمله.';
+      'بإكمال شاشة الترحيب تُؤكّد أن عمرك ١٨ سنة فأكثر، وأنك قرأت سياسة الخصوصية ومعايير المجتمع، وتقبل الالتزام بهما. إذا لم توافق، أغلق التطبيق ولا تستعمله.';
 
   @override
   String get terms_section_anonymity_h => '٢. الهوية المجهولة';

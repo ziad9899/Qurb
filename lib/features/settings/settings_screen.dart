@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/auth/auth_providers.dart';
 import '../../core/prefs/prefs_providers.dart';
@@ -11,6 +12,22 @@ import '../../core/widgets/qurb_icon.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../profile/data/profile_providers.dart';
 import '../showcase/design_showcase_screen.dart' show idShapeProvider;
+
+/// Public privacy policy is hosted on GitHub Pages so legal review
+/// (Apple, PDPL) can see the canonical text without an app build.
+const _privacyPolicyBaseUrl =
+    'https://ziad9899.github.io/Qurb/privacy.html';
+
+Future<void> _openPrivacyPolicy(BuildContext context) async {
+  final lang = Localizations.localeOf(context).languageCode;
+  final url = Uri.parse('$_privacyPolicyBaseUrl?lang=$lang');
+  final ok = await launchUrl(url, mode: LaunchMode.externalApplication);
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).compose_err_generic)),
+    );
+  }
+}
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -226,8 +243,7 @@ class SettingsScreen extends ConsumerWidget {
                   _Row(
                     icon: QIcon.lock,
                     label: t.privacy_title,
-                    onTap: () =>
-                        GoRouter.of(context).push('/settings/privacy'),
+                    onTap: () => _openPrivacyPolicy(context),
                   ),
                   _Row(
                     icon: QIcon.flag,

@@ -44,6 +44,11 @@ dependencies:
   flutter_image_compress: ^2.3.0
   cached_network_image: ^3.4.1
 
+  # url_launcher: needed to open the public privacy policy URL
+  # (https://ziad9899.github.io/Qurb/privacy.html) in the system
+  # browser from the welcome screen + settings.
+  url_launcher: ^6.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

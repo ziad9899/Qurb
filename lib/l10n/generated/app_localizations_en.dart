@@ -59,7 +59,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcome_age_confirm =>
-      'I confirm I am 13 years of age or older, and I agree to the Terms of Use and Community Guidelines.';
+      'I confirm I am 18 years of age or older, and I agree to the Terms of Use and Community Guidelines.';
 
   @override
   String get welcome_terms_prefix => 'By continuing you accept the ';
@@ -777,7 +777,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get terms_section_acceptance_b =>
-      'By completing the welcome screen you confirm that you are 13 years of age or older, that you have read the Privacy Policy and Community Guidelines, and that you agree to be bound by them. If you do not agree, close the app and do not use it.';
+      'By completing the welcome screen you confirm that you are 18 years of age or older, that you have read the Privacy Policy and Community Guidelines, and that you agree to be bound by them. If you do not agree, close the app and do not use it.';
 
   @override
   String get terms_section_anonymity_h => '2. Anonymous identity';
